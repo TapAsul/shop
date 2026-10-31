@@ -1,0 +1,8 @@
+User-agent: *
+Allow: /
+
+# The admin dashboard is not for search engines.
+Disallow: /admin.html
+Disallow: /admin
+
+Sitemap: https://tapasul.example/sitemap.xml

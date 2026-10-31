@@ -1,0 +1,46 @@
+# ============================================================================
+# Cloudflare Pages — response headers
+# ----------------------------------------------------------------------------
+# Cloudflare reads this file automatically from the root of your site folder.
+# Nothing to configure — just keep the file next to index.html.
+# ============================================================================
+
+/*
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: strict-origin-when-cross-origin
+  X-Frame-Options: SAMEORIGIN
+  Permissions-Policy: geolocation=(), microphone=(), camera=(), interest-cohort=()
+  Strict-Transport-Security: max-age=31536000; includeSubDomains
+  Content-Security-Policy: default-src 'self'; img-src 'self' data: blob:; font-src 'self'; style-src 'self' 'unsafe-inline'; script-src 'self'; connect-src 'self' https:; form-action 'self' https:; frame-ancestors 'self'; base-uri 'self'; object-src 'none'
+
+# --- HTML + config: always fresh, so your edits show up immediately -------
+/*.html
+  Cache-Control: public, max-age=0, must-revalidate
+
+/site.config.js
+  Cache-Control: public, max-age=0, must-revalidate
+
+/seo.js
+  Cache-Control: public, max-age=0, must-revalidate
+
+# --- static assets: cache for a year, they never change -------------------
+/assets/*
+  Cache-Control: public, max-age=31536000, immutable
+
+/three.min.js
+  Cache-Control: public, max-age=31536000, immutable
+
+/favicon.svg
+  Cache-Control: public, max-age=31536000, immutable
+
+# --- search engines -------------------------------------------------------
+/robots.txt
+  Cache-Control: public, max-age=3600
+
+/sitemap.xml
+  Cache-Control: public, max-age=3600
+
+# --- the dashboard must never be indexed or cached as a landing page -------
+/admin.html
+  X-Robots-Tag: noindex, nofollow
+  Cache-Control: no-store, max-age=0

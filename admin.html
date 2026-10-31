@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<!-- seo:begin — generated from site.config.js by `node tools/build-seo.js`. -->
+  <title>TapAsul — Pre-order dashboard</title>
+  <meta name="robots" content="noindex, nofollow">
+  <link rel="canonical" href="https://tapasul.example/admin.html">
+  <meta property="og:title" content="TapAsul — Pre-order dashboard">
+  <meta property="og:description" content="Internal pre-order dashboard.">
+  <!-- seo:end -->
+<link rel="icon" type="image/svg+xml" href="favicon.svg">
+<link rel="stylesheet" href="fonts.css">
+<link rel="stylesheet" href="admin.css">
+</head>
+<body>
+
+<!-- ================= PIN GATE ================= -->
+<div class="gate" id="gate">
+  <form class="gate__card" id="gateForm" autocomplete="off">
+    <img class="gate__mark" src="assets/logo-frog.svg" alt="">
+    <h1>TapAsul <span style="color:var(--brand)">Admin</span></h1>
+    <p>Enter the admin PIN to open your pre-order dashboard.</p>
+    <div class="gate__row">
+      <label class="sr-only" for="pin">Admin PIN</label>
+      <input class="input" type="password" id="pin" inputmode="numeric" placeholder="PIN" required>
+      <button class="btn btn--primary" type="submit">Unlock</button>
+    </div>
+    <p class="gate__err" id="gateErr" role="alert">That PIN is not right. Try again.</p>
+  </form>
+</div>
+
+<!-- ================= DASHBOARD ================= -->
+<div class="app" id="app">
+
+  <header class="topbar">
+    <div class="topbar__in">
+      <img class="topbar__mark" src="assets/logo-frog.svg" alt="">
+      <div>
+        <div class="topbar__title">TapAsul <span>Admin</span></div>
+        <div class="topbar__sub" id="storeNote">Pre-order dashboard</div>
+      </div>
+      <div class="topbar__spacer"></div>
+      <button class="btn btn--ghost btn--sm" type="button" id="refreshBtn">Refresh</button>
+      <button class="btn btn--ghost btn--sm" type="button" id="lockBtn">Lock</button>
+    </div>
+    <nav class="tabs" role="tablist" aria-label="Dashboard sections">
+      <button class="tab" type="button" role="tab" data-view="overview" aria-selected="true">Overview</button>
+      <button class="tab" type="button" role="tab" data-view="orders" aria-selected="false">Orders <span class="count" id="orderCount">0</span></button>
+      <button class="tab" type="button" role="tab" data-view="pricing" aria-selected="false">Pricing</button>
+      <button class="tab" type="button" role="tab" data-view="setup" aria-selected="false">Setup</button>
+    </nav>
+  </header>
+
+  <main class="wrap">
+
+    <!-- ---------------- OVERVIEW ---------------- -->
+    <section class="view" id="view-overview" role="tabpanel">
+      <div class="grid grid--stats" style="margin-bottom:16px">
+        <div class="stat stat--accent">
+          <div class="stat__label">Revenue</div>
+          <div class="stat__value" id="statRevenue">₱0</div>
+          <div class="stat__note" id="statRevenueNote">across all orders</div>
+        </div>
+        <div class="stat">
+          <div class="stat__label">Orders</div>
+          <div class="stat__value" id="statOrders">0</div>
+          <div class="stat__note" id="statOrdersNote">0 this month</div>
+        </div>
+        <div class="stat">
+          <div class="stat__label">Units</div>
+          <div class="stat__value" id="statUnits">0</div>
+          <div class="stat__note">cards &amp; stands ordered</div>
+        </div>
+        <div class="stat">
+          <div class="stat__label">Average order</div>
+          <div class="stat__value" id="statAvg">₱0</div>
+          <div class="stat__note" id="statHosting">₱0 / month hosting</div>
+        </div>
+        <div class="stat">
+          <div class="stat__label">Needs action</div>
+          <div class="stat__value" id="statPending">0</div>
+          <div class="stat__note">new or awaiting contact</div>
+        </div>
+      </div>
+
+      <div class="grid grid--2">
+        <div class="card">
+          <div class="card__head">
+            <h2>Orders — last 14 days</h2>
+            <div class="spacer"></div>
+            <span class="badge" id="chartTotal">0 orders</span>
+          </div>
+          <div class="card__body">
+            <div class="chart" id="chart"></div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card__head"><h2>Product mix</h2></div>
+          <div class="card__body">
+            <div id="mixList"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card" style="margin-top:16px">
+        <div class="card__head">
+          <h2>Latest orders</h2>
+          <div class="spacer"></div>
+          <button class="btn btn--ghost btn--sm" type="button" data-goto="orders">See all orders</button>
+        </div>
+        <div class="tablewrap" id="recentTable"></div>
+      </div>
+    </section>
+
+    <!-- ---------------- ORDERS ---------------- -->
+    <section class="view" id="view-orders" role="tabpanel" hidden>
+      <div class="card">
+        <div class="toolbar">
+          <input class="input grow" type="search" id="search" placeholder="Search name, email, product or order ID…" aria-label="Search orders">
+          <select class="select" id="filterStatus" aria-label="Filter by status"><option value="">All statuses</option></select>
+          <select class="select" id="filterProduct" aria-label="Filter by product"><option value="">All products</option></select>
+          <select class="select" id="filterRange" aria-label="Filter by date">
+            <option value="">All time</option>
+            <option value="7">Last 7 days</option>
+            <option value="30">Last 30 days</option>
+            <option value="90">Last 90 days</option>
+          </select>
+          <button class="btn btn--ghost btn--sm" type="button" id="csvBtn">Export CSV</button>
+          <button class="btn btn--ghost btn--sm" type="button" id="printBtn">Print</button>
+        </div>
+        <div class="tablewrap" id="ordersTable"></div>
+      </div>
+
+      <div class="card" style="margin-top:16px">
+        <div class="card__head"><h2>Order detail</h2></div>
+        <div class="card__body" id="orderDetail">
+          <p style="color:var(--text-muted);font-size:.9rem">Select an order to see the full details.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ---------------- PRICING ---------------- -->
+    <section class="view" id="view-pricing" role="tabpanel" hidden>
+      <div class="card" style="margin-bottom:16px">
+        <div class="card__head">
+          <h2>Products &amp; pricing</h2>
+          <div class="spacer"></div>
+          <button class="btn btn--ghost btn--sm" type="button" id="resetPrice">Reset to config</button>
+        </div>
+        <div class="card__body">
+          <p style="font-size:.88rem;color:var(--text-muted);margin-bottom:6px">
+            Change a number, copy the block below and paste it into <code>site.config.js</code> at the
+            matching place. Nothing is saved to the server — this page never writes to your config.
+          </p>
+          <div id="priceRows"></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card__head">
+          <h2>Ready-to-paste config</h2>
+          <div class="spacer"></div>
+          <button class="btn btn--primary btn--sm" type="button" id="copyPrice">Copy to clipboard</button>
+        </div>
+        <div class="card__body">
+          <pre class="code" id="priceCode"></pre>
+        </div>
+      </div>
+    </section>
+
+    <!-- ---------------- SETUP ---------------- -->
+    <section class="view" id="view-setup" role="tabpanel" hidden>
+      <div class="card" style="margin-bottom:16px">
+        <div class="card__head"><h2>How orders reach you</h2></div>
+        <div class="card__body">
+          <div class="note" id="modeNote"></div>
+          <div style="margin-top:18px" id="modeOptions"></div>
+        </div>
+      </div>
+
+      <div class="card" style="margin-bottom:16px">
+        <div class="card__head">
+          <h2>Go-live checklist</h2>
+          <div class="spacer"></div>
+          <button class="btn btn--ghost btn--sm" type="button" id="backupBtn">Download site.config.js</button>
+        </div>
+        <div class="card__body" id="checklist"></div>
+      </div>
+
+      <div class="card" style="margin-bottom:16px">
+        <div class="card__head"><h2>Order storage</h2></div>
+        <div class="card__body" id="storageBox"></div>
+      </div>
+
+      <div class="card">
+        <div class="card__head"><h2>Business details</h2></div>
+        <div class="card__body">
+          <div class="grid grid--2" id="detailGrid"></div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script src="site.config.js"></script>
+<script src="admin.js"></script>
+</body>
+</html>

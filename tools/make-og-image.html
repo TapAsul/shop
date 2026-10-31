@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>TapAsul — Social preview generator</title>
+<style>
+  body { margin:0; font-family: system-ui, sans-serif; background:#0f172a; color:#e2e8f0;
+         display:grid; place-items:center; min-height:100vh; padding:32px; }
+  .wrap { max-width: 1000px; width:100%; }
+  h1 { font-size:1.25rem; margin:0 0 6px; }
+  p  { color:#94a3b8; font-size:.875rem; margin:0 0 20px; }
+  .row { display:flex; gap:12px; flex-wrap:wrap; margin-bottom:20px; }
+  input, button { font:inherit; padding:10px 14px; border-radius:8px; border:1px solid #334155; }
+  input { background:#1e293b; color:#fff; }
+  button { background:#0881ef; color:#fff; border-color:#0881ef; font-weight:600; cursor:pointer; }
+  canvas { width:100%; height:auto; border-radius:12px; box-shadow:0 20px 50px -20px #000; display:block; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Social preview generator</h1>
+  <p>Set your details, then screenshot or download the 1200×630 PNG and save it as
+     <code>assets/social-preview.png</code>. Uses your real card artwork
+     (<code>assets/card-front.jpg</code> and <code>assets/card-back.jpg</code>) and the frog logo.
+     Runs entirely offline.</p>
+
+  <div class="row">
+    <input id="line1" value="Smart NFC digital" size="28">
+    <input id="line2" value="cards &amp; acrylic QR stands" size="24">
+    <input id="price" value="From ₱899" size="12">
+    <input id="domain" value="tapasul.example" size="18">
+    <button id="download">Download PNG</button>
+  </div>
+
+  <canvas id="og" width="1200" height="630"></canvas>
+</div>
+
+<script>
+const c = document.getElementById('og');
+const g = c.getContext('2d');
+const BRAND = '#0881ef', DARK = '#0a0f1d', LIGHT = '#e8f2fe', MUTED = '#64748b';
+
+// ---- real artwork -------------------------------------------------------
+const art = { front: null, back: null, logo: null };
+
+function loadArt() {
+  art.front = new Image(); art.front.src = '../assets/card-front.jpg';
+  art.back  = new Image(); art.back.src  = '../assets/card-back.jpg';
+  art.logo  = new Image(); art.logo.src  = '../assets/logo-frog.svg';
+  [art.front, art.back, art.logo].forEach((i) => i.addEventListener('load', draw));
+}
+
+function rr(ctx, x, y, w, h, r) {
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.arcTo(x + w, y, x + w, y + h, r);
+  ctx.arcTo(x + w, y + h, x, y + h, r);
+  ctx.arcTo(x, y + h, x, y, r);
+  ctx.arcTo(x, y, x + w, y, r);
+  ctx.closePath();
+}
+
+// draw an artwork image inside a rounded "card" with a soft shadow
+function place(img, x, y, w, h, radius) {
+  if (!img || !img.complete || !img.naturalWidth) return;
+  g.save();
+  g.shadowColor = 'rgba(15,23,42,.22)'; g.shadowBlur = 26; g.shadowOffsetY = 14;
+  rr(g, x, y, w, h, radius); g.fillStyle = '#fff'; g.fill();
+  g.restore();
+
+  g.save();
+  rr(g, x, y, w, h, radius); g.clip();
+  // cover-fit the artwork
+  const s = Math.max(w / img.naturalWidth, h / img.naturalHeight);
+  const dw = img.naturalWidth * s, dh = img.naturalHeight * s;
+  g.drawImage(img, x + (w - dw) / 2, y + (h - dh) / 2, dw, dh);
+  g.restore();
+
+  rr(g, x, y, w, h, radius);
+  g.strokeStyle = 'rgba(15,23,42,.14)'; g.lineWidth = 1.5; g.stroke();
+}
+
+function draw() {
+  const line1 = document.getElementById('line1').value;
+  const line2 = document.getElementById('line2').value;
+  const price = document.getElementById('price').value;
+  const domain = document.getElementById('domain').value;
+
+  // background + glow
+  g.fillStyle = '#f8fafc'; g.fillRect(0, 0, 1200, 630);
+  const glow = g.createRadialGradient(600, -60, 40, 600, -60, 820);
+  glow.addColorStop(0, 'rgba(8,129,239,.16)');
+  glow.addColorStop(1, 'rgba(8,129,239,0)');
+  g.fillStyle = glow; g.fillRect(0, 0, 1200, 630);
+
+  const x = 80;
+
+  // eyebrow pill
+  g.fillStyle = LIGHT;
+  g.font = '600 16px system-ui, sans-serif';
+  const pillW = g.measureText('MORE THAN JUST A TAP').width + 44;
+  rr(g, x, 84, pillW, 42, 21); g.fill();
+  g.fillStyle = '#07559c';
+  g.fillText('MORE THAN JUST A TAP', x + 22, 111);
+
+  // frog mark + wordmark, on one baseline
+  const markW = 66, markH = 59, markX = x, markY = 172;
+  if (art.logo && art.logo.complete && art.logo.naturalWidth) {
+    g.drawImage(art.logo, markX, markY, markW, markH);
+  }
+  g.font = '800 88px system-ui, sans-serif';
+  g.fillStyle = DARK;
+  g.fillText('Tap', x + markW + 18, 252);
+  const tw = g.measureText('Tap').width;
+  g.fillStyle = BRAND;
+  g.fillText('Asul', x + markW + 18 + tw, 252);
+
+  // headline — auto-shrinks so it never collides with the card artwork
+  g.fillStyle = DARK;
+  const maxW = 545;
+  let fs = 40;
+  g.font = '800 ' + fs + 'px system-ui, sans-serif';
+  while (fs > 22 && Math.max(g.measureText(line1).width, g.measureText(line2).width) > maxW) {
+    fs -= 1;
+    g.font = '800 ' + fs + 'px system-ui, sans-serif';
+  }
+  g.fillText(line1, x, 330);
+  g.fillText(line2, x, 330 + fs * 1.2);
+
+  // subline
+  g.fillStyle = MUTED;
+  g.font = '500 22px system-ui, sans-serif';
+  g.fillText('Tap to share your contact card.', x, 446);
+  g.fillText('Scan to earn more Google reviews.', x, 476);
+
+  // price pill + domain
+  g.font = '600 25px system-ui, sans-serif';
+  const pw = g.measureText(price).width + 50;
+  g.fillStyle = BRAND;
+  rr(g, x, 512, pw, 52, 13); g.fill();
+  g.fillStyle = '#fff';
+  g.fillText(price, x + 25, 546);
+  g.fillStyle = '#94a3b8';
+  g.font = '500 18px system-ui, sans-serif';
+  g.fillText(domain, x + pw + 22, 546);
+
+  // products — the real card faces
+  place(art.back,  952, 344, 190, 120, 13);
+  place(art.front, 648, 218, 332, 210, 17);
+}
+
+['line1','line2','price','domain'].forEach((id) =>
+  document.getElementById(id).addEventListener('input', draw));
+
+document.getElementById('download').addEventListener('click', () => {
+  const a = document.createElement('a');
+  a.download = 'social-preview.png';
+  a.href = c.toDataURL('image/png');
+  a.click();
+});
+
+loadArt();
+draw();
+</script>
+</body>
+</html>
