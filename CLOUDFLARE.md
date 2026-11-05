@@ -171,3 +171,72 @@ Full walkthrough, queries and troubleshooting: **`BOOKING-SETUP.md`**.
 | Forgot the PIN | It is in `site.config.js` (search `pin:`). It is a soft lock — anyone can read it, so change it to something private. |
 | Social preview shows the wrong image | `assets/social-preview.png` is the share image. Regenerate it with `tools/make-og-image.html`. |
 | Fonts look different | The fonts are self-hosted in `assets/fonts/`. Don't delete that folder. |
+| `npx wrangler deploy` fails with **"Missing entry-point to Worker script or to assets directory"** | Your project is building as a **Worker**, but this is a **Pages** site. See "The deploy command is wrong" below. |
+| `wrangler` warns **"you have run wrangler deploy on a Pages project"** | Same thing — the deploy command is the Workers one. Fix below. |
+
+---
+
+## The deploy command is wrong — "Missing entry-point to Worker script"
+
+This is the one that catches everybody. It is **not** a problem with the site;
+it is a setting on the Cloudflare project.
+
+### What is happening
+
+`npx wrangler deploy` deploys a **Worker** and looks for a JavaScript
+entry-point (`main = "src/index.js"`). TapAsul is a **Pages** site: HTML,
+CSS, images and a `functions/` folder. There is no entry-point, so the build
+stops at the last step. The warning in the log gives it away:
+
+```
+▲ [WARNING] It seems that you have run `wrangler deploy` on a Pages project,
+            `wrangler pages deploy` should be used instead.
+✘ [ERROR] Missing entry-point to Worker script or to assets directory
+```
+
+### Fix it in the dashboard (2 minutes)
+
+1. Cloudflare dashboard → **Workers & Pages** → open the project.
+2. **Settings → Build** (newer UI: **Settings → Builds**).
+3. Change **Deploy command**:
+   - **`npx wrangler pages deploy .`** ← use this
+   - delete `npx wrangler deploy` — never use it here.
+   - If the next build says *"Could not determine project name"*, use
+     `npx wrangler pages deploy . --project-name=YOUR-PROJECT-NAME` (the name is
+     at the top of the project page).
+   - If the field accepts an empty value, clearing it also works — Pages then
+     does its own upload step.
+4. Check the rest of the build settings:
+
+   | Setting | Value |
+   |---|---|
+   | Build command | `node tools/build-seo.js` |
+   | Deploy command | `npx wrangler pages deploy .` |
+   | Build output directory | `.` |
+   | Root directory | the folder that holds `index.html` (leave empty if the repo root is the site, e.g. `v2` if it sits in a `v2/` folder) |
+   | Framework preset | `None` |
+
+5. **Save**, then **Retry deployment** (or push an empty commit).
+
+### If the project was created as a Worker
+
+A Worker project cannot serve `functions/` or `_headers`, so it is the wrong
+shape for this site. Create the Pages one instead — it takes a minute and the
+old project can simply be deleted afterwards:
+
+1. **Workers & Pages → Create → Pages → Connect to Git**.
+2. Pick the repo and branch, set the four settings in the table above.
+3. **Save and Deploy.**
+
+### Does `wrangler.toml` cause this?
+
+No — but a `wrangler.toml` with a **placeholder** `database_id` will break a
+wrangler-driven deploy. The one shipped here has the D1 block commented out on
+purpose, so a Git build can never trip over it. Set the D1 binding in
+**Settings → Functions → Bindings** instead (`BOOKING-SETUP.md`, Step 2).
+
+### Already on GitHub Pages too?
+
+GitHub Pages can host the pages but cannot run `functions/`, so bookings there
+fall back to opening the customer's mail app. Cloudflare Pages is the one that
+saves to D1.
