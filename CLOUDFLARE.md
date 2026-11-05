@@ -5,18 +5,27 @@ no server to maintain. Cloudflare Pages hosts it for free with HTTPS included.
 
 ---
 
-## Before you start — 3 edits
+## Before you start — 4 edits
 
 Open **`site.config.js`** in any text editor (Notepad works). Search for these
-three lines and change them:
+lines and change them:
 
 ```js
 url: "https://tapasul.example",       // ← your real domain
 pin: "1234",                          // ← your admin PIN (search "pin:")
 mode: "email",                        // ← how orders reach you (search "mode:")
+fee: 150,                            // ← your Metro Manila shipping fee
 ```
 
+The shipping fee appears twice — one for Metro Manila, one for provincial
+deliveries. Ask your courier for the real numbers, or set them to 0 and
+charge shipping separately for now.
+
 Save. That's it — everything else already works.
+
+> **Want to know what to charge?** Read **`PRICING-GUIDE.md`** in this folder.
+> It walks you through materials, labour, transport and overheads, and the
+> `admin.html` → Pricing tab has the same maths as a live calculator.
 
 > **Don't have your domain yet?** Skip it. The site detects the address it is
 > being served from and uses that for its links, so you can deploy right now
@@ -103,20 +112,49 @@ You get automatic rebuilds every time you change something.
 | `robots.txt` | Generated. Tells Google to index the site but **not** `/admin.html`. |
 | `sitemap.xml` | Generated from `brand.url`. Submit it in Google Search Console. |
 | `manifest.webmanifest` | Makes the site installable on a phone home screen. |
-| `admin.html` | The pre-order dashboard. Sends `X-Robots-Tag: noindex` so it never appears in Google. |
+| `admin.html` | The booking dashboard. Sends `X-Robots-Tag: noindex` so it never appears in Google. |
+| `terms.html`, `refund-policy.html`, `privacy-policy.html` | The legal pages. Already linked in the footer and listed in `sitemap.xml` — the wording is in `site.config.js` → `legalPages`. |
 | `.assetsignore` | Keeps the `tools/` folder out of the published site. |
+
+---
+
+## Bookings → your own database + your Gmail
+
+The site now ships with a Cloudflare Function at `functions/api/bookings.js`.
+Every booking is saved in a **Cloudflare D1** database and emailed to
+`tapasul.digitalcard@gmail.com`, and `admin.html` reads them all back from D1.
+
+You have to connect it once, in the dashboard:
+
+1. Create the database and run `schema.sql` — **Step 1** in `BOOKING-SETUP.md`.
+2. Pages project → **Settings → Functions → Bindings**:
+   - **D1 database** binding named `DB` → `tapasul-bookings`
+   - **Send email** binding named `EMAIL` → `tapasul.digitalcard@gmail.com`
+   - Secret `ADMIN_PIN` (the same PIN you put in `site.config.js`)
+3. Redeploy.
+
+**Important:** `functions/` only runs on Cloudflare Pages. If you also publish
+the same folder to GitHub Pages, that copy can show the site but cannot save
+bookings — GitHub Pages has no server. Use the Cloudflare copy as the real one.
+
+Full walkthrough, queries and troubleshooting: **`BOOKING-SETUP.md`**.
 
 ---
 
 ## After it's live — a 10-minute checklist
 
 - [ ] Open your site on a phone. Check the layout and the menu.
-- [ ] Submit a **test pre-order** from the form.
+- [ ] Submit a **test booking** from the form.
+- [ ] Check it arrived **in Gmail** and in **D1** (`BOOKING-SETUP.md`, Step 6).
 - [ ] Go to `https://yourdomain.com/admin.html`, unlock with your PIN, and
       confirm the test order is in the dashboard.
 - [ ] Change the test order's status to `confirmed` — it should stick.
 - [ ] Add your domain to **Google Search Console** → **Sitemaps** →
       `sitemap.xml`.
+- [ ] Open `/terms.html`, `/refund-policy.html` and `/privacy-policy.html` and
+      read them. Have a lawyer check the wording before you take real money.
+- [ ] Open `/admin.html` → Pricing and run your own numbers through the cost
+      calculator, then set the price in `site.config.js`.
 - [ ] Add your domain to **Google Business Profile** and point it at the site.
 - [ ] Share the link — the Open Graph image (the card preview) is already set.
 

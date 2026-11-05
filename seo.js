@@ -40,12 +40,15 @@
     return '+' + s;
   }
 
-  // {card} {acrylic} {hosting} -> live prices, so copy can never fall out of sync
+  // {card} {hosting} -> live prices, so copy can never fall out of sync
   function tokens(cfg, str) {
     var out = String(str == null ? '' : str);
     var P = cfg.pricing.products || {};
     (cfg.pricing.order || []).forEach(function (id) {
-      if (P[id]) out = out.split('{' + id + '}').join(money(cfg, P[id].price));
+      if (!P[id]) return;
+      out = out.split('{' + id + '}').join(money(cfg, P[id].price));
+      // {cardHosting} {premiumHosting} -> that product's monthly fee
+      if (P[id].monthly) out = out.split('{' + id + 'Hosting}').join(money(cfg, P[id].monthly));
     });
     var card = P[(cfg.pricing.order || [])[0]];
     if (card && card.monthly) out = out.split('{hosting}').join(money(cfg, card.monthly));

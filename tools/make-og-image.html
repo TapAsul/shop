@@ -23,12 +23,13 @@
   <p>Set your details, then screenshot or download the 1200×630 PNG and save it as
      <code>assets/social-preview.png</code>. Uses your real card artwork
      (<code>assets/card-front.jpg</code> and <code>assets/card-back.jpg</code>) and the frog logo.
-     Runs entirely offline.</p>
+     Runs entirely offline. The two panels on the right are the real front
+     and back of your card.</p>
 
   <div class="row">
     <input id="line1" value="Smart NFC digital" size="28">
-    <input id="line2" value="cards &amp; acrylic QR stands" size="24">
-    <input id="price" value="From ₱899" size="12">
+    <input id="line2" value="cards, made yours" size="24">
+    <input id="price" value="From ₱999" size="12">
     <input id="domain" value="tapasul.example" size="18">
     <button id="download">Download PNG</button>
   </div>
@@ -132,7 +133,7 @@ function draw() {
   g.fillStyle = MUTED;
   g.font = '500 22px system-ui, sans-serif';
   g.fillText('Tap to share your contact card.', x, 446);
-  g.fillText('Scan to earn more Google reviews.', x, 476);
+  g.fillText('Standard, or customised with your own logo.', x, 476);
 
   // price pill + domain
   g.font = '600 25px system-ui, sans-serif';

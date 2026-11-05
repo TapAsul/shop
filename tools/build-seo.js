@@ -95,13 +95,46 @@ function main() {
 
   // admin.html gets the same title + canonical so it never looks broken
   const adminHead = [
-    '  <title>' + SEO.esc(cfg.brand.name) + ' — Pre-order dashboard</title>',
+    '  <title>' + SEO.esc(cfg.brand.name) + ' — Booking dashboard</title>',
     '  <meta name="robots" content="noindex, nofollow">',
     '  <link rel="canonical" href="' + SEO.esc(base + '/admin.html') + '">',
-    '  <meta property="og:title" content="' + SEO.esc(cfg.brand.name + ' — Pre-order dashboard') + '">',
-    '  <meta property="og:description" content="Internal pre-order dashboard.">',
+    '  <meta property="og:title" content="' + SEO.esc(cfg.brand.name + ' — Booking dashboard') + '">',
+    '  <meta property="og:description" content="Internal booking dashboard.">',
   ].join('\n');
   if (replaceBlock('admin.html', 'seo', adminHead)) console.log('  ✓ admin.html (noindex + title)');
+
+  // the standalone "What's inside your digital card?" page
+  const featuresTitle = (cfg.content && cfg.content.pageTitles && cfg.content.pageTitles.features)
+    || "What's inside your digital card? — " + cfg.brand.name;
+  const featuresDesc = 'Everything your TapAsul digital card holds: the standard card gives you the essentials plus two features you pick, the Premium card gives you everything.';
+  const featuresHead = [
+    '  <title>' + SEO.esc(featuresTitle) + '</title>',
+    '  <meta name="description" content="' + SEO.esc(featuresDesc) + '">',
+    '  <link rel="canonical" href="' + SEO.esc(base + '/features.html') + '">',
+    '  <meta property="og:title" content="' + SEO.esc(featuresTitle) + '">',
+    '  <meta property="og:description" content="' + SEO.esc(featuresDesc) + '">',
+    '  <meta property="og:url" content="' + SEO.esc(base + '/features.html') + '">',
+    '  <meta property="og:type" content="website">',
+  ].join('\n');
+  if (replaceBlock('features.html', 'seo', featuresHead)) console.log('  \u2713 features.html (meta + canonical)');
+  else console.log('  ! features.html — could not find the <!-- seo:begin --> markers');
+
+  // legal pages — title, description and canonical for the real domain
+  const legalMeta = {
+    terms: { file: 'terms.html', title: 'Terms of Use', desc: 'The terms that apply when you buy a TapAsul NFC digital card and use the profile we host for you.' },
+    refund: { file: 'refund-policy.html', title: 'Refund Policy', desc: 'When you can get a refund on a TapAsul order, how to ask for one, and how long it takes.' },
+    privacy: { file: 'privacy-policy.html', title: 'Privacy Policy', desc: 'What TapAsul collects, why we collect it, how long we keep it, and how to ask us to delete it. Data Protection Officer: ' + ((cfg.legal && cfg.legal.dpoEmail) || cfg.brand.email) + '.' },
+  };
+  Object.keys(legalMeta).forEach(function (k) {
+    const m = legalMeta[k];
+    const head = [
+      '  <title>' + SEO.esc(m.title + ' — ' + cfg.brand.name) + '</title>',
+      '  <meta name="description" content="' + SEO.esc(m.desc) + '">',
+      '  <link rel="canonical" href="' + SEO.esc(base + '/' + m.file) + '">',
+    ].join('\n');
+    if (replaceBlock(m.file, 'seo', head)) console.log('  \u2713 ' + m.file + ' (meta + canonical)');
+    else console.log('  ! ' + m.file + ' — could not find the <!-- seo:begin --> markers');
+  });
 
   console.log('');
   checklist(cfg);
@@ -137,22 +170,33 @@ function checklist(cfg) {
   const mode = cfg.order && cfg.order.mode;
   if (mode === 'demo') {
     items.push(['!', 'Order mode is "demo"',
-      'Set order.mode to "email" so pre-orders actually reach you.']);
+      'Set order.mode to "email" so bookings actually reach you.']);
   } else {
     items.push(['✓', 'Order mode', mode]);
   }
 
-  if (mode === 'formspree' || mode === 'google-form') {
+  if (mode === 'formspree' || mode === 'google-form' || mode === 'worker' || mode === 'd1') {
     if (!cfg.order.endpoint) {
       items.push(['✗', 'Order endpoint is empty',
-        'Add the Formspree / Apps Script URL to order.endpoint.']);
+        'Set order.endpoint — "/api/bookings" for the built-in Cloudflare Function.']);
     } else {
       items.push(['✓', 'Order endpoint set', cfg.order.endpoint]);
     }
   }
 
+  if (mode === 'worker' || mode === 'd1') {
+    const hasFn = fs.existsSync(path.join(ROOT, 'functions', 'api', 'bookings.js'));
+    const hasSchema = fs.existsSync(path.join(ROOT, 'schema.sql'));
+    items.push([hasFn && hasSchema ? '✓' : '✗', 'Cloudflare D1 + Gmail backend',
+      hasFn && hasSchema
+        ? 'functions/api/bookings.js + schema.sql are here. Bind DB and EMAIL in Pages — see BOOKING-SETUP.md.'
+        : 'Missing functions/api/bookings.js or schema.sql.']);
+    items.push(['!', 'Bindings are set in Cloudflare, not in this folder',
+      'Pages -> Settings -> Functions: D1 "DB", Send email "EMAIL", secret ADMIN_PIN.']);
+  }
+
   if (!cfg.brand.email) {
-    items.push(['✗', 'brand.email is empty', 'Pre-orders need somewhere to go.']);
+    items.push(['✗', 'brand.email is empty', 'Bookings need somewhere to go.']);
   }
 
   if (cfg.order && cfg.order.admin && !cfg.order.admin.remoteUrl) {

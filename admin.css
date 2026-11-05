@@ -439,3 +439,61 @@ td.num { text-align: right; font-variant-numeric: tabular-nums; }
   body { background: #fff; }
   .card { box-shadow: none; border-color: #ccc; }
 }
+
+/* ================= cost & selling-price calculator ================= */
+.calc { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); gap: 20px; align-items: start; }
+@media (max-width: 900px) { .calc { grid-template-columns: 1fr; } }
+
+.calc__inputs { display: grid; gap: 14px; }
+.calc__group {
+  border: 1px solid var(--surface-alt);
+  border-radius: 12px;
+  padding: 14px 16px 16px;
+  margin: 0;
+  background: var(--surface);
+}
+.calc__group legend {
+  font-size: .78rem; font-weight: 800; letter-spacing: .04em; text-transform: uppercase;
+  color: var(--brand); padding: 0 8px; margin-left: -6px;
+}
+.calc__row { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; }
+.calc__field { display: block; }
+.calc__field > span {
+  display: block; font-size: .74rem; color: var(--text-muted); margin-bottom: 5px; font-weight: 600;
+}
+.calc__hint { margin: 12px 0 0; font-size: .76rem; color: var(--text-faint); line-height: 1.5; }
+
+.calc__out { display: grid; gap: 14px; position: sticky; top: 12px; }
+.calc__result-head {
+  background: linear-gradient(135deg, var(--brand), #4aa6f5);
+  color: #fff; border-radius: 14px; padding: 20px 22px; text-align: center;
+}
+.calc__result-label { font-size: .72rem; letter-spacing: .09em; text-transform: uppercase; opacity: .9; font-weight: 700; }
+.calc__result-price { font-size: 2.6rem; font-weight: 800; line-height: 1.1; margin: 4px 0 2px; }
+.calc__result-sub { font-size: .82rem; opacity: .92; }
+
+.calc__warns { display: grid; gap: 8px; }
+.calc__warn { font-size: .8rem; line-height: 1.45; padding: 9px 12px; border-radius: 10px; border: 1px solid; }
+.calc__warn--good { background: #ecfdf3; border-color: #a7e3c0; color: #14663c; }
+.calc__warn--bad  { background: #fef2f2; border-color: #f3b5b5; color: #8c1c1c; }
+.calc__warn--info { background: #eff6ff; border-color: #bcd7fb; color: #14487f; }
+
+.calc__block { border: 1px solid var(--surface-alt); border-radius: 12px; padding: 14px 16px; background: var(--surface); }
+.calc__block h3 { margin: 0 0 10px; font-size: .82rem; text-transform: uppercase; letter-spacing: .05em; color: var(--text-muted); }
+.calc__line {
+  display: grid; grid-template-columns: 1fr auto; gap: 2px 12px;
+  padding: 7px 0; border-bottom: 1px dashed var(--surface-alt); font-size: .86rem;
+}
+.calc__line:last-child { border-bottom: 0; }
+.calc__line-label { color: var(--text-muted); }
+.calc__line-value { font-weight: 700; color: var(--ink); white-space: nowrap; }
+.calc__line-note { grid-column: 1 / -1; font-size: .74rem; color: var(--text-faint); }
+.calc__line--strong { border-top: 1px solid var(--surface-alt); }
+.calc__line--strong .calc__line-label { color: var(--ink); font-weight: 700; }
+.calc__line--strong .calc__line-value { font-size: 1rem; }
+
+.calc__guide { margin-top: 18px; border: 1px solid var(--surface-alt); border-radius: 12px; padding: 12px 16px; background: var(--surface); }
+.calc__guide summary { cursor: pointer; font-weight: 700; font-size: .9rem; color: var(--ink); }
+.calc__guide ol { margin: 12px 0 0; padding-left: 20px; font-size: .86rem; line-height: 1.65; color: var(--text-muted); }
+.calc__guide ol li { margin-bottom: 7px; }
+.calc__guide p { font-size: .84rem; color: var(--text-muted); line-height: 1.6; margin: 12px 0 0; }

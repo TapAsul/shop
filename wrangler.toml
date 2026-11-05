@@ -1,0 +1,35 @@
+# ============================================================================
+#  TapAsul — Cloudflare Pages + D1
+# ----------------------------------------------------------------------------
+#  You do NOT need this file to deploy: Cloudflare Pages reads the bindings you
+#  set in the dashboard. It is here so you can (a) run the site locally with the
+#  real database and (b) keep a written record of what the worker expects.
+#
+#  Local run with the database:
+#     npx wrangler d1 execute tapasul-bookings --local --file=./schema.sql
+#     npx wrangler pages dev . --d1=DB=tapasul-bookings \
+#         --binding ADMIN_PIN=your-pin --port 8788
+#
+#  Then open http://127.0.0.1:8788
+# ============================================================================
+
+name = "tapasul"
+pages_build_output_dir = "."
+compatibility_date = "2026-01-01"
+
+# --- the database every booking is saved into -------------------------------
+[[d1_databases]]
+binding = "DB"                     # must match env.DB in functions/api/bookings.js
+database_name = "tapasul-bookings"
+database_id = "PASTE-YOUR-DATABASE-ID-HERE"
+
+# --- plain settings ---------------------------------------------------------
+[vars]
+SITE_DOMAIN = "tapasul.com"        # used to build bookings@<domain>
+MAIL_FROM   = "bookings@tapasul.com"
+
+# --- secrets (never put the real values in this file) -----------------------
+#   npx wrangler pages secret put ADMIN_PIN
+#   npx wrangler pages secret put RESEND_API_KEY    (only if you use Resend)
+#
+# [vars] ADMIN_PIN is only for local testing. In production use a secret.

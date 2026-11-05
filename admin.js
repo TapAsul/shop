@@ -1,6 +1,6 @@
 /* ==========================================================================
    TapAsul Admin — dashboard logic
-   No dependencies. Reads site.config.js, shows pre-orders captured by the
+   No dependencies. Reads site.config.js, shows appointments booked by the
    public site, and gives you a copy-and-paste pricing editor.
    ========================================================================== */
 (function () {
@@ -12,9 +12,10 @@
   var P = (CFG.pricing && CFG.pricing.products) || {};
   var CURRENCY = (CFG.pricing && CFG.pricing.currency) || '₱';
   var STATUSES = ADMIN.statuses || ['new', 'contacted', 'confirmed', 'shipped', 'cancelled'];
-  var KEY = ADMIN.storageKey || 'tapasul_orders_v1';
+  var KEY = ADMIN.storageKey || 'tapasul_bookings_v1';
 
   var SESSION_KEY = 'tapasul_admin_unlocked';
+  var REMOTE_PIN_KEY = 'tapasul_admin_pin';
   var state = { orders: [], view: 'overview', selected: null, prices: {} };
 
   /* ---------------- helpers ---------------- */
@@ -35,7 +36,12 @@
 
   function money(n) {
     var v = Number(n) || 0;
-    return CURRENCY + v.toLocaleString('en-PH');
+    // show centavos only when there are any, so the worksheet stays readable
+    var s = (Math.round(v * 100) / 100).toLocaleString('en-PH', {
+      minimumFractionDigits: Math.abs(v % 1) > 0.004 ? 2 : 0,
+      maximumFractionDigits: 2,
+    });
+    return CURRENCY + s;
   }
 
   function esc(s) {
@@ -90,12 +96,31 @@
       submittedAt: o.submittedAt || o.createdAt || new Date().toISOString(),
       name: o.name || o.customer || '',
       email: o.email || '',
+      phone: o.phone || '',
       product: o.product || '',
       productId: o.productId || '',
       quantity: Number(o.quantity || o.qty || 1),
       unitPrice: Number(o.unitPrice || 0),
       monthlyHosting: Number(o.monthlyHosting || 0),
       discount: Number(o.discount || 0),
+      shipping: Number(o.shipping || 0),
+      shippingZone: o.shippingZone || '',
+      paymentMethod: o.paymentMethod || '',
+      codFee: Number(o.codFee || 0),
+      date: o.date || o.appointmentDate || '',
+      slot: o.slot || o.appointmentTime || '',
+      address: o.address || '',
+      notes: o.notes || o.note || '',
+      deposit: Number(o.deposit || 0),
+      balance: Number(o.balance || 0),
+      branding: o.branding || '',
+      finish: o.finish || '',
+      profileName: o.profileName || '',
+      profileUrl: o.profileUrl || '',
+      addOns: Array.isArray(o.addOns) ? o.addOns : [],
+      features: Array.isArray(o.features)
+        ? o.features
+        : (typeof o.features === 'string' ? o.features.split(',').map(function (f) { return f.trim(); }).filter(Boolean) : []),
       total: Number(o.total || 0),
       currency: o.currency || 'PHP',
       status: o.status || 'new',
@@ -132,10 +157,24 @@
       });
   }
 
+  function remotePin() {
+    if (!ADMIN.remoteAuth) return '';
+    try { return sessionStorage.getItem(REMOTE_PIN_KEY) || ''; } catch (e) { return ''; }
+  }
+
+  function remoteUrlWithPin(url) {
+    var pin = remotePin();
+    if (!pin) return url;
+    return url + (url.indexOf('?') >= 0 ? '&' : '?') + 'pin=' + encodeURIComponent(pin);
+  }
+
   function loadRemote() {
     var url = ADMIN.remoteUrl;
     if (!url) return Promise.resolve([]);
-    return fetch(url, { cache: 'no-store' })
+    var headers = {};
+    var pin = remotePin();
+    if (pin) headers['x-admin-pin'] = pin;
+    return fetch(remoteUrlWithPin(url), { cache: 'no-store', headers: headers })
       .then(function (r) {
         if (!r.ok) throw new Error('HTTP ' + r.status);
         var ct = r.headers.get('content-type') || '';
@@ -145,10 +184,24 @@
       .then(function (data) {
         if (Array.isArray(data)) return data.map(function (o) { return normalise(o, 'sheet'); });
         if (typeof data === 'string') return parseCSV(data);
-        if (data && Array.isArray(data.orders)) return data.orders.map(function (o) { return normalise(o, 'sheet'); });
+        if (data && Array.isArray(data.orders)) return data.orders.map(function (o) { return normalise(o, 'd1'); });
         return [];
       })
       .catch(function () { return []; });
+  }
+
+  // write a status change back to D1, so it survives on every device
+  function pushStatus(id, status) {
+    if (!ADMIN.remoteAuth || !ADMIN.remoteUrl) return Promise.resolve(false);
+    var pin = remotePin();
+    if (!pin) return Promise.resolve(false);
+    return fetch(ADMIN.remoteUrl, {
+      method: 'PATCH',
+      headers: { 'content-type': 'application/json', 'x-admin-pin': pin },
+      body: JSON.stringify({ id: id, status: status }),
+    })
+      .then(function (r) { return r.ok; })
+      .catch(function () { return false; });
   }
 
   function load() {
@@ -181,15 +234,20 @@
     writeLocal(list);
     state.orders.forEach(function (o) { if (o.id === id) o.status = status; });
     renderAll();
+    // and in the database, so the change is there on your phone tomorrow
+    pushStatus(id, status).then(function (ok) {
+      if (ok) toast('Status saved to D1');
+      else if (ADMIN.remoteAuth && ADMIN.remoteUrl) toast('Saved here only — D1 did not answer');
+    });
   }
 
   function deleteOrder(id) {
-    if (!confirm('Delete this order? This cannot be undone.')) return;
+    if (!confirm('Delete this booking? This cannot be undone.')) return;
     writeLocal(localOrders().filter(function (o) { return o.id !== id; }));
     state.orders = state.orders.filter(function (o) { return o.id !== id; });
     if (state.selected === id) { state.selected = null; renderDetail(); }
     renderAll();
-    toast('Order deleted');
+    toast('Booking deleted');
   }
 
   /* ---------------- gate ---------------- */
@@ -215,6 +273,7 @@
     var pin = $('#pin').value.trim();
     if (pin && pin === String(ADMIN.pin)) {
       $('#gateErr').classList.remove('show');
+      try { sessionStorage.setItem(REMOTE_PIN_KEY, pin); } catch (e) { /* ignore */ }
       unlock();
     } else {
       $('#gateErr').classList.add('show');
@@ -258,7 +317,7 @@
     });
 
     $('#statRevenue').textContent = money(revenue);
-    $('#statRevenueNote').textContent = 'across ' + orders.length + ' order' + (orders.length === 1 ? '' : 's');
+    $('#statRevenueNote').textContent = 'across ' + orders.length + ' booking' + (orders.length === 1 ? '' : 's');
     $('#statOrders').textContent = orders.length;
     $('#statOrdersNote').textContent = thisMonth + ' this month';
     $('#statUnits').textContent = units;
@@ -286,7 +345,7 @@
     var max = Math.max.apply(null, days.map(function (d) { return counts[dayKey(d)]; }).concat([1]));
     days.forEach(function (d) {
       var n = counts[dayKey(d)];
-      var col = el('div', { class: 'chart__col', title: n + ' order' + (n === 1 ? '' : 's') + ' on ' + d.toDateString() });
+      var col = el('div', { class: 'chart__col', title: n + ' booking' + (n === 1 ? '' : 's') + ' on ' + d.toDateString() });
       col.appendChild(el('div', { class: 'chart__value', text: n ? String(n) : '' }));
       col.appendChild(el('div', {
         class: 'chart__bar' + (n ? '' : ' is-empty'),
@@ -295,7 +354,7 @@
       col.appendChild(el('div', { class: 'chart__label', text: d.getDate() === 1 ? d.toLocaleDateString('en-PH', { month: 'short' }) : String(d.getDate()) }));
       wrap.appendChild(col);
     });
-    $('#chartTotal').textContent = total + ' order' + (total === 1 ? '' : 's');
+    $('#chartTotal').textContent = total + ' booking' + (total === 1 ? '' : 's');
   }
 
   function renderMix() {
@@ -309,7 +368,7 @@
     });
     var keys = Object.keys(totals);
     if (!keys.length) {
-      box.appendChild(el('p', { class: 'empty', style: 'padding:24px 0', text: 'No orders yet.' }));
+      box.appendChild(el('p', { class: 'empty', style: 'padding:24px 0', text: 'No bookings yet.' }));
       return;
     }
     var max = Math.max.apply(null, keys.map(function (k) { return totals[k]; }));
@@ -331,7 +390,7 @@
     var table = el('table');
     var thead = el('thead');
     var hr = el('tr');
-    ['Order', 'Customer', 'Product', 'Qty', 'Total', 'Monthly', 'Status', 'Placed'].forEach(function (h) {
+    ['Booking', 'Customer', 'Card', 'Qty', 'Total', 'Monthly', 'Appointment', 'Status', 'Placed'].forEach(function (h) {
       hr.appendChild(el('th', { text: h }));
     });
     if (withActions) hr.appendChild(el('th', { text: '' }));
@@ -348,10 +407,16 @@
       tr.appendChild(el('td', {}, [
         o.email ? el('a', { href: 'mailto:' + o.email, text: o.email }) : el('span', { text: '—' })
       ]));
-      tr.appendChild(el('td', { text: o.product || '—' }));
+      tr.appendChild(el('td', {}, [
+        el('div', { text: o.product || '—' }),
+        (o.features && o.features.length)
+          ? el('div', { style: 'font-size:.72rem;color:var(--brand);font-weight:600', text: o.features.join(' · ') })
+          : null
+      ].filter(Boolean)));
       tr.appendChild(el('td', { class: 'num', text: String(o.quantity) }));
       tr.appendChild(el('td', { class: 'num', style: 'font-weight:700', text: money(o.total) }));
       tr.appendChild(el('td', { class: 'num', text: o.monthlyHosting ? money(o.monthlyHosting) : '—' }));
+      tr.appendChild(el('td', { style: 'white-space:nowrap;font-size:.82rem;color:var(--text-muted)', text: o.date ? (o.date + (o.slot ? ' · ' + o.slot : '')) : '—' }));
       tr.appendChild(el('td', {}, [])).innerHTML = statusBadge(o.status);
       tr.appendChild(el('td', { style: 'white-space:nowrap;font-size:.82rem;color:var(--text-muted)', text: shortDate(dateOf(o)) }));
 
@@ -416,8 +481,8 @@
     box.innerHTML = '';
     if (!state.orders.length) {
       box.appendChild(el('div', { class: 'empty' }, [
-        el('h3', { text: 'No orders yet' }),
-        el('p', { text: 'Pre-orders submitted through the site appear here. Set the order mode in site.config.js to "local" so they are captured, or point the dashboard at a published Google Sheet to collect orders from every device.' })
+        el('h3', { text: 'No bookings yet' }),
+        el('p', { text: 'Appointments booked through the site appear here. Set the order mode in site.config.js to "local" so they are captured, or point the dashboard at a published Google Sheet to collect bookings from every device.' })
       ]));
       return;
     }
@@ -437,7 +502,7 @@
     if (!state.orders.length) {
       box.appendChild(el('div', { class: 'empty' }, [
         el('h3', { text: 'Nothing here yet' }),
-        el('p', { text: 'Pre-orders will show up on this page as soon as the site starts capturing them.' })
+        el('p', { text: 'Bookings will show up on this page as soon as the site starts capturing them.' })
       ]));
       return;
     }
@@ -449,23 +514,30 @@
     box.innerHTML = '';
     var o = state.orders.filter(function (x) { return x.id === state.selected; })[0];
     if (!o) {
-      box.appendChild(el('p', { style: 'color:var(--text-muted);font-size:.9rem', text: 'Select an order to see the full details.' }));
+      box.appendChild(el('p', { style: 'color:var(--text-muted);font-size:.9rem', text: 'Select a booking to see the full details.' }));
       return;
     }
     var rows = [
-      ['Order ID', o.id],
+      ['Booking ID', o.id],
       ['Customer', o.name],
       ['Email', o.email],
-      ['Product', o.product],
+      ['Phone', o.phone || '—'],
+      ['Appointment', o.date ? (o.date + (o.slot ? ' at ' + o.slot : '')) : '—'],
+      ['Card', o.product],
+      ['Features on the card', o.features && o.features.length ? o.features.join(', ') : '—'],
+      ['Their free page', o.profileUrl || (o.profileName ? o.profileName : '—')],
       ['Quantity', String(o.quantity)],
       ['Unit price', money(o.unitPrice)],
       ['Discount', o.discount ? '-' + money(o.discount) : '—'],
+      ['Delivery', o.shippingZone ? (o.shippingZone + (o.shipping ? ' · ' + money(o.shipping) : '')) : '—'],
+      ['Payment method', o.paymentMethod || '—'],
       ['Total', money(o.total)],
+      ['Due today', o.deposit ? money(o.deposit) : '—'],
       ['Monthly hosting', o.monthlyHosting ? money(o.monthlyHosting) + ' / month' : '—'],
       ['Status', o.status],
-      ['Placed', shortDate(dateOf(o))],
+      ['Booked', shortDate(dateOf(o))],
       ['Source', o.source === 'local' ? 'this device' : (o.source || 'site')],
-      ['Note', o.note || '—'],
+      ['Notes', o.notes || o.note || '—'],
     ];
     var table = el('table');
     var tbody = el('tbody');
@@ -481,8 +553,12 @@
     var mail = el('a', {
       class: 'btn btn--primary btn--sm',
       href: 'mailto:' + (o.email || '') +
-        '?subject=' + encodeURIComponent('Your TapAsul pre-order ' + o.id) +
-        '&body=' + encodeURIComponent('Hi ' + (o.name || '') + ',\n\nThanks for your pre-order.\n\nOrder: ' + o.id + '\nProduct: ' + o.product + '\nQuantity: ' + o.quantity + '\nTotal: ' + money(o.total) + '\n\n— TapAsul'),
+        '?subject=' + encodeURIComponent('Your TapAsul booking ' + o.id) +
+        '&body=' + encodeURIComponent('Hi ' + (o.name || '') + ',\n\nThanks for booking with TapAsul.\n\nBooking: ' + o.id +
+          '\nAppointment: ' + (o.date || 'to be confirmed') + (o.slot ? ' at ' + o.slot : '') +
+          '\nCard: ' + o.product + ' × ' + o.quantity +
+          '\nTotal: ' + money(o.total) +
+          '\n\nSee you soon!\n\n— TapAsul'),
       text: 'Email this customer',
       style: 'margin-top:16px'
     });
@@ -546,6 +622,169 @@
     $('#priceCode').textContent = lines.join('\n');
   }
 
+  /* ---------------- cost & selling-price calculator ---------------- */
+  var CALC_IDS = ['cQty', 'cMonthly', 'cBody', 'cNfc', 'cPrint', 'cPack', 'cRate',
+    'cMinutes', 'cSetup', 'cCourier', 'cPerParcel', 'cShipCharge', 'cSite',
+    'cTools', 'cMarketing', 'cAdmin', 'cMargin', 'cDiscount', 'cHosting'];
+
+  function num(id) {
+    var v = parseFloat(($('#' + id) || {}).value);
+    return isNaN(v) ? 0 : v;
+  }
+
+  // round up to a price that looks like a real price (…90 / …99)
+  function prettyPrice(n) {
+    if (!isFinite(n) || n <= 0) return 0;
+    var base = Math.ceil(n / 100) * 100;
+    var p99 = base - 1;
+    return p99 < n ? (base + 99) : p99;
+  }
+
+  function calcResults() {
+    var qty = Math.max(1, num('cQty'));
+    var monthlyUnits = Math.max(1, num('cMonthly'));
+
+    var materials = num('cBody') + num('cNfc') + num('cPrint') + num('cPack');
+    var labourPerUnit = (num('cRate') * num('cMinutes')) / 60;
+    var setupPerUnit = num('cSetup') / qty;
+    var perParcel = Math.max(1, num('cPerParcel'));
+    var courierPerUnit = num('cCourier') / perParcel;
+
+    var directPerUnit = materials + labourPerUnit + setupPerUnit + courierPerUnit;
+
+    var monthlyOpex = num('cSite') + num('cTools') + num('cMarketing') + num('cAdmin');
+    var opexPerUnit = monthlyOpex / monthlyUnits;
+    var landed = directPerUnit + opexPerUnit;
+
+    var discount = Math.min(0.9, num('cDiscount') / 100);
+    var margin = Math.min(0.95, num('cMargin') / 100);
+
+    var breakEven = landed;
+    var targetPrice = landed;
+    if (discount < 1) targetPrice = targetPrice / (1 - discount);
+    if (margin < 1) targetPrice = targetPrice / (1 - margin);
+    if (!isFinite(targetPrice) || targetPrice <= 0) targetPrice = breakEven;
+
+    var shelf = prettyPrice(targetPrice);
+    var netAfterDiscount = shelf * (1 - discount);
+    var profitPerUnit = netAfterDiscount - landed;
+    var marginAtShelf = netAfterDiscount > 0 ? (profitPerUnit / netAfterDiscount) * 100 : 0;
+
+    var hosting = num('cHosting');
+    var recurringPerMonth = hosting * monthlyUnits;
+    var breakEvenUnits = monthlyOpex > 0 ? Math.ceil(monthlyOpex / Math.max(1, profitPerUnit)) : 0;
+
+    var shipCharge = num('cShipCharge');
+    var shipNote = '';
+    if (shipCharge > 0) {
+      var diff = shipCharge - courierPerUnit;
+      shipNote = diff >= 0
+        ? 'Shipping adds ' + money(diff) + ' to each order — that is extra margin on top of the numbers above.'
+        : 'You are absorbing ' + money(-diff) + ' on every delivery. Raise the shipping fee or the price to cover it.';
+    }
+
+    return {
+      qty: qty, monthlyUnits: monthlyUnits,
+      materials: materials, labourPerUnit: labourPerUnit, setupPerUnit: setupPerUnit,
+      courierPerUnit: courierPerUnit, directPerUnit: directPerUnit,
+      monthlyOpex: monthlyOpex, opexPerUnit: opexPerUnit, landed: landed,
+      breakEven: breakEven, targetPrice: targetPrice, shelf: shelf,
+      netAfterDiscount: netAfterDiscount, profitPerUnit: profitPerUnit,
+      marginAtShelf: marginAtShelf, hosting: hosting,
+      recurringPerMonth: recurringPerMonth, breakEvenUnits: breakEvenUnits,
+      shipNote: shipNote, discount: discount, margin: margin,
+      batchCost: directPerUnit * qty,
+    };
+  }
+
+  function calcLine(label, value, opts) {
+    opts = opts || {};
+    var row = el('div', { class: 'calc__line' + (opts.strong ? ' calc__line--strong' : '') });
+    row.appendChild(el('span', { class: 'calc__line-label', text: label }));
+    row.appendChild(el('span', { class: 'calc__line-value', text: value }));
+    if (opts.note) row.appendChild(el('span', { class: 'calc__line-note', text: opts.note }));
+    return row;
+  }
+
+  function renderCalc() {
+    var box = $('#calcOut');
+    if (!box) return;
+    var r = calcResults();
+    box.innerHTML = '';
+
+    var head = el('div', { class: 'calc__result-head' });
+    head.appendChild(el('div', { class: 'calc__result-label', text: 'Recommended selling price' }));
+    head.appendChild(el('div', { class: 'calc__result-price', text: money(r.shelf) }));
+    head.appendChild(el('div', { class: 'calc__result-sub', text: r.discount > 0
+      ? 'per unit, after a ' + Math.round(r.discount * 100) + '% discount — you still keep ' + money(r.profitPerUnit)
+      : 'per unit — you keep ' + money(r.profitPerUnit) }));
+    box.appendChild(head);
+
+    var warns = el('div', { class: 'calc__warns' });
+    if (r.marginAtShelf < 10) {
+      warns.appendChild(el('div', { class: 'calc__warn calc__warn--bad', text: 'That price only leaves you ' + r.marginAtShelf.toFixed(1) + '% margin. Raise the price or cut a cost.' }));
+    } else {
+      warns.appendChild(el('div', { class: 'calc__warn calc__warn--good', text: 'Margin at this price is ' + r.marginAtShelf.toFixed(1) + '%.' }));
+    }
+    if (r.profitPerUnit <= 0) {
+      warns.appendChild(el('div', { class: 'calc__warn calc__warn--bad', text: 'You would lose ' + money(-r.profitPerUnit) + ' on every unit sold. Do not use this price.' }));
+    }
+    if (r.shipNote) {
+      warns.appendChild(el('div', { class: 'calc__warn calc__warn--info', text: r.shipNote }));
+    }
+    var current = (P[PRODUCTS[0]] || {}).price;
+    if (current && r.shelf && Math.abs(current - r.shelf) / current > 0.25) {
+      warns.appendChild(el('div', { class: 'calc__warn calc__warn--info', text: 'Your site currently charges ' + money(current) + ' for ' + (P[PRODUCTS[0]] || {}).name + '. Update pricing.products in site.config.js if you want to follow this number.' }));
+    }
+    box.appendChild(warns);
+
+    var costs = el('div', { class: 'calc__block' });
+    costs.appendChild(el('h3', { text: 'What one unit actually costs you' }));
+    costs.appendChild(calcLine('Materials (body + NFC + print + packaging)', money(r.materials)));
+    costs.appendChild(calcLine('Your labour', money(r.labourPerUnit), { note: Math.round(num('cMinutes')) + ' min at ' + money(num('cRate')) + '/hr' }));
+    costs.appendChild(calcLine('One-off setup, spread over ' + r.qty + ' units', money(r.setupPerUnit)));
+    costs.appendChild(calcLine('Courier, per unit', money(r.courierPerUnit)));
+    costs.appendChild(calcLine('Cost per unit before overheads', money(r.directPerUnit), { strong: true }));
+    costs.appendChild(calcLine('Share of monthly overheads', money(r.opexPerUnit), { note: money(r.monthlyOpex) + ' ÷ ' + r.monthlyUnits + ' units' }));
+    costs.appendChild(calcLine('TOTAL cost per unit', money(r.landed), { strong: true }));
+    box.appendChild(costs);
+
+    var price = el('div', { class: 'calc__block' });
+    price.appendChild(el('h3', { text: 'How the price was worked out' }));
+    price.appendChild(calcLine('Break-even price (cost only)', money(r.breakEven), { note: 'below this you lose money' }));
+    price.appendChild(calcLine('After a ' + Math.round(r.discount * 100) + '% discount', money(r.landed / (1 - r.discount))));
+    price.appendChild(calcLine('Price needed for a ' + Math.round(r.margin * 100) + '% margin', money(r.targetPrice)));
+    price.appendChild(calcLine('Recommended shelf price', money(r.shelf), { strong: true }));
+    price.appendChild(calcLine('Profit per unit at that price', money(r.profitPerUnit), { strong: true }));
+    price.appendChild(calcLine('Total profit on this batch of ' + r.qty, money(r.profitPerUnit * r.qty)));
+    box.appendChild(price);
+
+    var rec = el('div', { class: 'calc__block' });
+    rec.appendChild(el('h3', { text: 'The business side' }));
+    rec.appendChild(calcLine('Recurring hosting income at ' + r.monthlyUnits + ' cards/month', money(r.recurringPerMonth), { note: 'per month, if every card is kept' }));
+    rec.appendChild(calcLine('Cash needed for this batch', money(r.batchCost), { note: 'materials + labour + setup + courier, before you are paid' }));
+    rec.appendChild(calcLine('Units to sell each month to cover overheads', r.breakEvenUnits ? r.breakEvenUnits + ' units' : 'no overheads set'));
+    rec.appendChild(calcLine('One card kept for 12 months is worth', money(r.hosting * 12), { note: 'hosting alone, before any profit' }));
+    box.appendChild(rec);
+  }
+
+  CALC_IDS.forEach(function (id) {
+    var input = document.getElementById(id);
+    if (input) input.addEventListener('input', renderCalc);
+  });
+  var calcResetBtn = document.getElementById('calcReset');
+  if (calcResetBtn) {
+    calcResetBtn.addEventListener('click', function () {
+      CALC_IDS.forEach(function (id) {
+        var input = document.getElementById(id);
+        if (input) input.value = input.defaultValue || input.value;
+      });
+      renderCalc();
+      toast('Calculator reset');
+    });
+  }
+  renderCalc();
+
   $('#copyPrice').addEventListener('click', function () {
     var text = $('#priceCode').textContent;
     if (navigator.clipboard && navigator.clipboard.writeText) {
@@ -568,10 +807,12 @@
     note.innerHTML = '';
 
     var copy = {
-      email: 'Pre-orders arrive in your inbox as an email. Works today with no backend. Each order is also copied into this dashboard on that device.',
-      local: 'Orders are saved in the visitor\'s browser and — if you set an endpoint — POSTed to your sheet. Point "remoteUrl" below at a published Google Sheet to see every device\'s orders here.',
-      formspree: 'Orders are POSTed to Formspree and land in your Formspree inbox. They are not readable from this dashboard unless you also set "remoteUrl".',
-      'google-form': 'Orders are POSTed to a Google Form / Apps Script Web App. Not readable from this dashboard unless you also set "remoteUrl".',
+      worker: 'Bookings are saved in your Cloudflare D1 database and emailed to your Gmail. This dashboard reads them all back from D1, so you see every device — change a status here and it is written back to the database.',
+      d1: 'Bookings are saved in your Cloudflare D1 database and emailed to your Gmail.',
+      email: 'Bookings arrive in your inbox as an email. Works today with no backend. Each booking is also copied into this dashboard on that device.',
+      local: 'Bookings are saved in the visitor\'s browser and — if you set an endpoint — POSTed to your sheet. Point "remoteUrl" below at a published Google Sheet to see every device\'s bookings here.',
+      formspree: 'Bookings are POSTed to Formspree and land in your Formspree inbox. They are not readable from this dashboard unless you also set "remoteUrl".',
+      'google-form': 'Bookings are POSTed to a Google Form / Apps Script Web App. Not readable from this dashboard unless you also set "remoteUrl".',
       demo: 'Demo mode: the form validates and shows a notice but sends nothing.',
     }[mode] || '';
     note.appendChild(el('div', { html: '<strong>Current mode: <code>' + esc(mode) + '</code></strong><br>' + esc(copy) }));
@@ -579,6 +820,7 @@
     var opts = $('#modeOptions');
     opts.innerHTML = '';
     var modes = [
+      ['worker', 'Cloudflare D1 + Gmail — the full booking is saved in your database and emailed to you. Recommended.'],
       ['email', 'Email — opens the visitor\'s mail app with the order filled in. No backend, zero cost.'],
       ['local', 'Local + sheet — saves the order and POSTs it to your endpoint. Best for a dashboard-driven workflow.'],
       ['formspree', 'Formspree — POSTs to a form endpoint; entries arrive by email.'],
@@ -616,7 +858,6 @@
       ['Admin PIN changed', String(ADMIN.pin) !== '1234' && !!ADMIN.pin, 'order.admin.pin — change the default 1234 before publishing.', ADMIN.pin],
       ['Remote order sheet', !!ADMIN.remoteUrl, 'order.admin.remoteUrl — a published Google Sheet CSV so you can read orders from any device.', ADMIN.remoteUrl],
       ['Team photos added', !!(P && Object.keys(P) && (CFG.team || []).every(function (m) { return m.photo; })), 'team[].photo — both founders have a portrait in assets/team/.', ''],
-      ['Acrylic artwork', !!((P.acrylic && P.acrylic.faces && P.acrylic.faces.front)), 'pricing.products.acrylic.faces.front — the standee still uses the generated design.', ''],
     ];
     items.forEach(function (it) {
       var row = el('div', { class: 'check ' + (it[1] ? 'check--done' : 'check--todo') });
@@ -732,7 +973,7 @@
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
-    toast('Exported ' + list.length + ' order' + (list.length === 1 ? '' : 's'));
+    toast('Exported ' + list.length + ' booking' + (list.length === 1 ? '' : 's'));
   });
 
   $('#printBtn').addEventListener('click', function () { window.print(); });
@@ -762,7 +1003,7 @@
     renderDetail();
     renderSetup();
     var remote = ADMIN.remoteUrl ? '· remote sheet connected' : '· this device only';
-    $('#storeNote').textContent = state.orders.length + ' order' + (state.orders.length === 1 ? '' : 's') + ' ' + remote;
+    $('#storeNote').textContent = state.orders.length + ' booking' + (state.orders.length === 1 ? '' : 's') + ' ' + remote;
   }
 
   fillFilters();
