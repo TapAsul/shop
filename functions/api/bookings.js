@@ -5,7 +5,7 @@
  *
  *  POST   /api/bookings    the booking form posts here. Public.
  *                          -> saves EVERY field to D1
- *                          -> emails a tidy copy to your Gmail
+ *                          -> emails a tidy copy to tapasul.digitalcard@gmail.com
  *
  *  GET    /api/bookings    the dashboard (admin.html) reads every booking,
  *                          from every device. Needs the admin PIN.
@@ -13,12 +13,12 @@
  *  PATCH  /api/bookings    change a booking's status / note. Needs the PIN.
  *
  *  Bindings this file expects (Cloudflare Pages -> Settings -> Functions):
- *    DB                  D1 database binding      -> your tapasul database
- *    EMAIL               Send Email binding       -> destination: your Gmail
- *    RESEND_API_KEY      optional, fallback mail (secret)
- *    ADMIN_PIN           secret, must match order.admin.pin
- *    BOOKING_EMAIL       optional, overrides the destination address
- *    MAIL_FROM           optional, the from address (e.g. bookings@tapasul.com)
+ *    DB                    D1 database binding     -> your tapasul database
+ *    EMAIL                 Send Email binding      -> destination: your Gmail
+ *    RESEND_API_KEY        optional, fallback mail (secret)
+ *    ADMIN_PIN             secret, must match order.admin.pin
+ *    BOOKING_EMAIL         optional, overrides the destination address
+ *    MAIL_FROM             optional, the from address (e.g. bookings@tapasul.com)
  *
  *  Nothing here is secret except the bindings above — this file is safe to
  *  publish. If a binding is missing the booking is still saved; you just get
@@ -149,7 +149,6 @@ function bookingRows(b) {
   const rows = [];
   const push = (label, value, strong) => {
     const empty = value === '' || value === null || value === undefined;
-    // a bold label with no value is a section heading ("APPOINTMENT", ...)
     if (empty && !strong) return;
     rows.push([label, empty ? '' : String(value), !!strong]);
   };
@@ -319,7 +318,7 @@ export async function onRequestPost({ request, env }) {
   try { body = JSON.parse(raw); } catch (e) { return json({ ok: false, error: 'Bad JSON.' }, 400); }
   if (!body || typeof body !== 'object') return json({ ok: false, error: 'Bad JSON.' }, 400);
 
-  // honeypot — a bot filled the hidden field, pretend it worked
+  // honeypot
   if (body._gotcha || body.website) return json({ ok: true, id: null, quiet: true });
 
   const b = readBooking(body, request);
@@ -334,14 +333,14 @@ export async function onRequestPost({ request, env }) {
     return json({ ok: false, error: 'Missing or invalid: ' + problems.join(', ') }, 422);
   }
 
-  // the same client id twice (a double tap) should not create two rows
+  // double tap check
   if (b.client_id) {
     const dupe = await env.DB.prepare('SELECT id FROM bookings WHERE client_id = ? LIMIT 1')
       .bind(b.client_id).first();
     if (dupe) return json({ ok: true, id: dupe.id, duplicate: true });
   }
 
-  // one device flooding the form
+  // rate limiting
   const ip = request.headers.get('cf-connecting-ip') || '';
   if (ip) {
     const since = new Date(Date.now() - 60 * 60 * 1000).toISOString();
@@ -383,7 +382,6 @@ export async function onRequestPost({ request, env }) {
     return json({ ok: false, error: 'Could not save the booking: ' + String(err && err.message || err).slice(0, 200) }, 500);
   }
 
-  // the booking is safe now — email is best effort
   let emailed = 0, via = '', emailError = '';
   try {
     via = await sendEmail(env, b);
@@ -395,7 +393,7 @@ export async function onRequestPost({ request, env }) {
   try {
     await env.DB.prepare('UPDATE bookings SET emailed = ?, email_via = ?, email_error = ? WHERE id = ?')
       .bind(emailed, via, emailError, b.id).run();
-  } catch (e) { /* the booking is already saved */ }
+  } catch (e) { /* saved */ }
 
   return json({
     ok: true,
@@ -490,7 +488,7 @@ export async function onRequestGet({ request, env }) {
 }
 
 /* -------------------------------------------------------------------------- *
- *  PATCH — status / note, so the dashboard writes back to D1
+ *  PATCH — status / note
  * -------------------------------------------------------------------------- */
 export async function onRequestPatch({ request, env }) {
   if (!env.DB) return json({ ok: false, error: 'The DB binding is missing.' }, 503);
