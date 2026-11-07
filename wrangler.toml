@@ -1,34 +1,10 @@
-# ============================================================================
-#  TapAsul — OPTIONAL Cloudflare config
-# ----------------------------------------------------------------------------
-#  READ THIS FIRST
-#  You do not need this file to deploy. Cloudflare Pages builds and publishes
-#  the folder on its own, and the D1 / Email bindings are set in the dashboard
-#  (Settings -> Functions -> Bindings).
-#
-#  This file only matters if you deploy from the command line with
-#  `npx wrangler pages deploy .` — and it is deliberately kept minimal so it
-#  can never break a Git build. Everything that needs a real value is
-#  commented out. Uncomment only what you have filled in.
-#
-#  ⚠️ Do NOT set this project's deploy command to `npx wrangler deploy` in the
-#  Cloudflare dashboard. That is the Workers command; this is a Pages site and
-#  it will fail with "Missing entry-point to Worker script". Use
-#  `npx wrangler pages deploy .` instead, or leave the field empty.
-# ============================================================================
-
-# Must match your Pages project name if you deploy with wrangler from a
-# terminal. It is commented out because a Git build does not need it.
-# name = "tapasul"
-
-# where the finished site is
+name = "shop"
 pages_build_output_dir = "."
-
 compatibility_date = "2026-01-01"
 
 # --- plain settings (safe to keep) ------------------------------------------
 [vars]
-SITE_DOMAIN = "tapasul.com"        # builds bookings@<domain>
+SITE_DOMAIN = "tapasul.com"
 MAIL_FROM   = "bookings@tapasul.com"
 
 # --- the database -----------------------------------------------------------
