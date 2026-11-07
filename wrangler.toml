@@ -21,3 +21,6 @@ MAIL_FROM   = "bookings@tapasul.com"
 # Never put these in this file. Set them as secrets:
 #   npx wrangler pages secret put ADMIN_PIN
 #   npx wrangler pages secret put RESEND_API_KEY     (only if you use Resend)
+[pages.build]
+command = "node tools/build-seo.js"
+output_dir = "."
