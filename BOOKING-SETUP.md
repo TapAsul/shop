@@ -14,6 +14,8 @@ emailed automatically, and `admin.html` reads them all back from the database.
 | File | What it does |
 |---|---|
 | `functions/api/bookings.js` | The Cloudflare Function at `/api/bookings`. Saves the booking in D1, emails it to you, and serves the dashboard. |
+| `functions/api/availability.js` | The Function at `/api/availability`. Tells the booking form which days and times are already full, so they can be greyed out. Returns counts only — never a name, email or phone. |
+| `api/availability` | A plain JSON file with the same address, used only if you host somewhere without Functions (e.g. GitHub Pages). Do not delete it. |
 | `schema.sql` | The database table + two handy views. Run this once. |
 | `wrangler.toml` | Shows the bindings the Function expects. Optional, for local testing. |
 | `site.config.js` | Already set to `mode: "worker"`, `endpoint: "/api/bookings"`, `admin.remoteUrl: "/api/bookings"`. |

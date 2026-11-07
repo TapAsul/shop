@@ -213,7 +213,8 @@
       return;
     }
 
-    box.innerHTML = items.map((w) => {
+    // every tile opens the picture full size — that is what people want to see
+    box.innerHTML = items.map((w, i) => {
       const img = w.image
         ? '<img src="' + esc(w.image) + '" alt="' + esc(w.title || 'TapAsul card') + '" loading="lazy">'
         : '';
@@ -221,11 +222,122 @@
           (w.title ? '<strong>' + esc(w.title) + '</strong>' : '')
         + (w.note ? '<span>' + esc(w.note) + '</span>' : '');
       const inner = img + (body ? '<span class="work__body">' + body + '</span>' : '');
-      if (w.href) {
-        return '<a class="work__item" href="' + esc(w.href) + '" target="_blank" rel="noopener">' + inner + '</a>';
-      }
-      return '<figure class="work__item">' + inner + '</figure>';
+      return '<figure class="work__item" data-work-open="' + i + '" tabindex="0" role="button"'
+        + ' aria-label="Open ' + esc(w.title || 'this card') + ' bigger">' + inner + '</figure>';
     }).join('');
+  }
+
+  /* ------------------------------------------------------------------
+   * The work lightbox
+   *   tap a card  -> the picture, as big as the screen allows
+   *   tap the picture -> actual size (so a QR code can be scanned)
+   *   arrows / swipe -> the next card, Esc or the backdrop -> close
+   * ------------------------------------------------------------------ */
+  function initWorkLightbox() {
+    const box = document.getElementById('workLightbox');
+    const grid = $('#workGrid');
+    if (!box || !grid) return;
+
+    const items = ((CFG.myWork && CFG.myWork.items) || []).filter((w) => w.image);
+    if (!items.length) return;
+
+    const stage = $('#lbStage');
+    const img = $('#lbImg');
+    const titleEl = $('#lbTitle');
+    const noteEl = $('#lbNote');
+    const linkEl = $('#lbLink');
+    const rawEl = $('#lbRaw');
+    const prevBtn = document.querySelector('[data-lb-prev]');
+    const nextBtn = document.querySelector('[data-lb-next]');
+    let index = 0;
+    let lastFocus = null;
+
+    function paint(i) {
+      index = (i + items.length) % items.length;
+      const w = items[index];
+      img.src = w.image;
+      img.alt = (w.title || 'TapAsul card') + (w.note ? ' — ' + w.note : '');
+      titleEl.textContent = w.title || '';
+      noteEl.textContent = w.note || '';
+      rawEl.href = w.image;
+      if (w.href) { linkEl.href = w.href; linkEl.hidden = false; }
+      else { linkEl.hidden = true; linkEl.removeAttribute('href'); }
+      const many = items.length > 1;
+      if (prevBtn) prevBtn.hidden = !many;
+      if (nextBtn) nextBtn.hidden = !many;
+      stage.classList.remove('is-zoomed');
+      stage.scrollTop = 0;
+      stage.scrollLeft = 0;
+    }
+
+    // zoom in on the middle of the picture, not the empty corner
+    function toggleZoom() {
+      const zooming = !stage.classList.contains('is-zoomed');
+      stage.classList.toggle('is-zoomed', zooming);
+      if (zooming) {
+        stage.scrollLeft = Math.max(0, (stage.scrollWidth - stage.clientWidth) / 2);
+        stage.scrollTop = Math.max(0, (stage.scrollHeight - stage.clientHeight) / 2);
+      }
+    }
+
+    function open(i) {
+      lastFocus = document.activeElement;
+      paint(i);
+      box.hidden = false;
+      document.documentElement.classList.add('is-locked');
+      const close = box.querySelector('.lightbox__close');
+      if (close) close.focus();
+    }
+
+    function close() {
+      box.hidden = true;
+      document.documentElement.classList.remove('is-locked');
+      img.removeAttribute('src');
+      if (lastFocus && lastFocus.focus) lastFocus.focus();
+    }
+
+    const isOpen = () => !box.hidden;
+
+    // open from a tile (mouse, touch or keyboard)
+    grid.addEventListener('click', (e) => {
+      const tile = e.target.closest('[data-work-open]');
+      if (!tile) return;
+      open(parseInt(tile.dataset.workOpen, 10) || 0);
+    });
+    grid.addEventListener('keydown', (e) => {
+      if (e.key !== 'Enter' && e.key !== ' ') return;
+      const tile = e.target.closest('[data-work-open]');
+      if (!tile) return;
+      e.preventDefault();
+      open(parseInt(tile.dataset.workOpen, 10) || 0);
+    });
+
+    box.addEventListener('click', (e) => {
+      if (e.target.closest('[data-lb-close]')) { close(); return; }
+      if (e.target.closest('[data-lb-prev]')) { paint(index - 1); return; }
+      if (e.target.closest('[data-lb-next]')) { paint(index + 1); return; }
+      if (e.target === img) { toggleZoom(); }
+    });
+
+    document.addEventListener('keydown', (e) => {
+      if (!isOpen()) return;
+      if (e.key === 'Escape') { close(); }
+      else if (e.key === 'ArrowRight') { paint(index + 1); }
+      else if (e.key === 'ArrowLeft') { paint(index - 1); }
+    });
+
+    // swipe on a phone
+    let sx = 0, sy = 0;
+    stage.addEventListener('touchstart', (e) => {
+      if (e.touches.length !== 1 || stage.classList.contains('is-zoomed')) return;
+      sx = e.touches[0].clientX; sy = e.touches[0].clientY;
+    }, { passive: true });
+    stage.addEventListener('touchend', (e) => {
+      if (stage.classList.contains('is-zoomed') || !e.changedTouches.length) return;
+      const dx = e.changedTouches[0].clientX - sx;
+      const dy = e.changedTouches[0].clientY - sy;
+      if (Math.abs(dx) > 60 && Math.abs(dx) > Math.abs(dy)) paint(index + (dx < 0 ? 1 : -1));
+    }, { passive: true });
   }
 
   function applyBrand() {
@@ -492,7 +604,7 @@
     });
   }
 
-  // ── "choose your 2 features" ───────────────────────────────────────
+  // ── "choose your feature" ──────────────────────────────────────────
   // The options come from inside.featured in site.config.js, so the
   // section and the booking form always show the same list.
   function featurePickConfig() {
@@ -502,7 +614,7 @@
     const options = (CFG.inside && CFG.inside.featured) || [];
     if (!options.length) return null;
     return {
-      max: typeof fp.max === 'number' ? fp.max : 2,
+      max: typeof fp.max === 'number' ? fp.max : 1,
       label: fp.label || 'Your features',
       note: fp.note || '',
       premiumNote: fp.premiumNote || '',
@@ -576,7 +688,9 @@
         } else {
           if (booking.features.length >= fp.max) {
             const e = $('#featurePickError');
-            if (e) e.textContent = 'Your Standard card includes ' + fp.max + ' features — remove one first.';
+            if (e) e.textContent = fp.max === 1
+              ? 'Your Standard card includes 1 feature — untick it first.'
+              : 'Your Standard card includes ' + fp.max + ' features — remove one first.';
             return;
           }
           booking.features.push(title);
@@ -594,29 +708,261 @@
     if (radio && !radio.checked) radio.checked = true;
   }
 
+  /* ------------------------------------------------------------------
+   * AVAILABILITY — which days and times are already taken
+   *   Local bookings (this browser) + /api/availability (everyone else's,
+   *   counts only, no personal data). A day is "fully booked" when every
+   *   slot in the config has reached booking.maxPerSlot.
+   * ------------------------------------------------------------------ */
+  const availability = { dates: {}, asked: {} };
+
+  function maxPerSlot() { return (CFG.booking && CFG.booking.maxPerSlot) || 4; }
+  function allSlots() { return (CFG.booking && CFG.booking.slots) || []; }
+
+  function localTally(date) {
+    const tally = {};
+    readLocalOrders().forEach((b) => {
+      if (b.date === date && b.slot) tally[b.slot] = (tally[b.slot] || 0) + 1;
+    });
+    return tally;
+  }
+
+  // how many people hold that slot — the higher of local and server numbers,
+  // so a booking that is in both places is not counted twice
+  function takenCount(date, slot) {
+    const local = localTally(date)[slot] || 0;
+    const remote = ((availability.dates[date] || {})[slot]) || 0;
+    return Math.max(local, remote);
+  }
+
+  function freeSlots(date) {
+    return allSlots().filter((t) => takenCount(date, t) < maxPerSlot());
+  }
+
+  function isDayFull(date) {
+    const slots = allSlots();
+    if (!slots.length) return false;
+    return freeSlots(date).length === 0;
+  }
+
+  function loadAvailability(fromISO, toISO) {
+    const key = fromISO + '..' + toISO;
+    if (availability.asked[key]) return;
+    availability.asked[key] = true;
+    const done = () => { renderCalendar(); renderBookingSlots(); };
+    if (!window.fetch) { done(); return; }
+    fetch('/api/availability?from=' + fromISO + '&to=' + toISO, { headers: { accept: 'application/json' } })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data) => {
+        if (data && data.ok && data.dates) {
+          Object.keys(data.dates).forEach((d) => {
+            availability.dates[d] = Object.assign({}, availability.dates[d], data.dates[d]);
+          });
+        }
+      })
+      .catch(() => { /* offline or no Functions — local bookings still block */ })
+      .then(done);
+  }
+
+  function monthRange(cursor) {
+    const y = cursor.getFullYear();
+    const m = cursor.getMonth();
+    return {
+      from: bookingDateISO(new Date(y, m, 1)),
+      to: bookingDateISO(new Date(y, m + 1, 0)),
+    };
+  }
+
+  /* ---------------- the calendar itself ---------------- */
+  let calCursor = null;
+
+  function renderCalendar() {
+    const grid = $('#calGrid');
+    if (!grid) return;
+    const input = $('#bookingDate');
+    const minISO = (input && input.min) || bookingDateISO(new Date());
+    const todayISO = bookingDateISO(new Date());
+
+    if (!calCursor) {
+      const base = booking.date || minISO;
+      calCursor = new Date(base + 'T00:00:00');
+      if (isNaN(calCursor)) calCursor = new Date(minISO + 'T00:00:00');
+      calCursor.setDate(1);
+    }
+
+    const year = calCursor.getFullYear();
+    const month = calCursor.getMonth();
+
+    const monthEl = $('#calMonth');
+    if (monthEl) {
+      monthEl.textContent = calCursor.toLocaleDateString('en-PH', { month: 'long', year: 'numeric' });
+    }
+
+    const prev = $('#calPrev');
+    if (prev) {
+      const minD = new Date(minISO + 'T00:00:00');
+      prev.disabled = year < minD.getFullYear() || (year === minD.getFullYear() && month <= minD.getMonth());
+    }
+
+    const pad = new Date(year, month, 1).getDay();
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
+    let html = '';
+
+    for (let i = 0; i < pad; i++) html += '<span class="datepick__day datepick__day--pad"></span>';
+
+    for (let d = 1; d <= daysInMonth; d++) {
+      const date = new Date(year, month, d);
+      const iso = bookingDateISO(date);
+      const past = iso < minISO;
+      const closed = !isOpenDay(iso);
+      const full = !past && !closed && isDayFull(iso);
+      const disabled = past || closed || full;
+
+      let cls = 'datepick__day';
+      if (closed) cls += ' datepick__day--closed';
+      if (full) cls += ' datepick__day--full';
+      if (iso === booking.date) cls += ' is-selected';
+      if (iso === todayISO) cls += ' is-today';
+
+      const spoken = date.toLocaleDateString('en-PH', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })
+        + (full ? ' — fully booked' : closed ? ' — closed' : '');
+
+      html += '<button type="button" class="' + cls + '" data-date="' + iso + '"'
+        + (disabled ? ' disabled' : '')
+        + ' aria-label="' + esc(spoken) + '"'
+        + (full ? ' title="Fully booked"' : closed ? ' title="Closed"' : '')
+        + '>' + d + '</button>';
+    }
+
+    grid.innerHTML = html;
+  }
+
+  function setDate(iso) {
+    const input = $('#bookingDate');
+    booking.date = iso;
+    booking.slot = '';
+    if (input && input.value !== iso) input.value = iso;
+
+    const value = $('#dateValue');
+    if (value) {
+      value.textContent = iso
+        ? new Date(iso + 'T00:00:00').toLocaleDateString('en-PH', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' })
+        : 'Pick a date';
+      value.classList.toggle('is-empty', !iso);
+    }
+
+    const hint = $('#dateHint');
+    if (hint) {
+      const free = iso ? freeSlots(iso).length : 0;
+      hint.textContent = !iso ? ''
+        : free === 0 ? 'That day is fully booked — please pick another day.'
+        : free === 1 ? 'Only 1 time left on that day.'
+        : free + ' times free on that day.';
+    }
+
+    renderCalendar();
+    renderBookingSlots();
+    calculateTotal();
+    updateSteps();
+  }
+
+  function closePanel() {
+    const panel = $('#datePanel');
+    const trigger = $('#dateTrigger');
+    if (panel) panel.hidden = true;
+    if (trigger) trigger.setAttribute('aria-expanded', 'false');
+  }
+
+  function openPanel() {
+    const panel = $('#datePanel');
+    const trigger = $('#dateTrigger');
+    if (!panel) return;
+    panel.hidden = false;
+    if (trigger) trigger.setAttribute('aria-expanded', 'true');
+    const range = monthRange(calCursor || new Date());
+    loadAvailability(range.from, range.to);
+
+    // make sure the whole calendar is on screen, not half below the fold
+    const box = panel.getBoundingClientRect();
+    const room = window.innerHeight - box.bottom;
+    if (room < 12) {
+      window.scrollBy({ top: Math.min(box.bottom - window.innerHeight + 20, box.top - 80), behavior: 'smooth' });
+    }
+  }
+
   function renderBookingDate() {
     const input = $('#bookingDate');
     if (!input) return;
+
     const bk = CFG.booking || {};
     const min = new Date();
     min.setDate(min.getDate() + (bk.leadDays || 0));
     const iso = bookingDateISO(min);
     input.min = iso;
-    if (!booking.date || booking.date < iso) booking.date = iso;
+
+    if (!booking.date || booking.date < iso) {
+      // start on the first day we are actually open (and not full)
+      let d = new Date(iso + 'T00:00:00');
+      for (let guard = 0; guard < 120; guard++) {
+        const dayISO = bookingDateISO(d);
+        if (isOpenDay(dayISO) && !isDayFull(dayISO)) break;
+        d.setDate(d.getDate() + 1);
+      }
+      booking.date = bookingDateISO(d);
+    }
     input.value = booking.date;
-    input.addEventListener('change', () => {
-      booking.date = input.value;
-      booking.slot = '';
-      renderBookingSlots();
-      calculateTotal();
+
+    input.addEventListener('change', () => setDate(input.value));
+
+    const trigger = $('#dateTrigger');
+    const panel = $('#datePanel');
+    const grid = $('#calGrid');
+
+    if (trigger) {
+      trigger.addEventListener('click', () => {
+        if (panel && panel.hidden) openPanel();
+        else closePanel();
+      });
+    }
+
+    const prev = $('#calPrev');
+    const next = $('#calNext');
+    if (prev) prev.addEventListener('click', () => {
+      calCursor.setMonth(calCursor.getMonth() - 1);
+      const r = monthRange(calCursor); loadAvailability(r.from, r.to); renderCalendar();
     });
+    if (next) next.addEventListener('click', () => {
+      calCursor.setMonth(calCursor.getMonth() + 1);
+      const r = monthRange(calCursor); loadAvailability(r.from, r.to); renderCalendar();
+    });
+
+    if (grid) {
+      grid.addEventListener('click', (e) => {
+        const day = e.target.closest('[data-date]');
+        if (!day || day.disabled) return;
+        setDate(day.dataset.date);
+        closePanel();
+        trigger && trigger.focus();
+      });
+    }
+
+    document.addEventListener('click', (e) => {
+      if (!panel || panel.hidden) return;
+      if (e.target.closest('.datepick')) return;
+      closePanel();
+    });
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && panel && !panel.hidden) { closePanel(); trigger && trigger.focus(); }
+    });
+
+    setDate(booking.date);
+    const range = monthRange(calCursor);
+    loadAvailability(range.from, range.to);
   }
 
   function renderBookingSlots() {
     const grid = $('#slotGrid');
     if (!grid) return;
-    const bk = CFG.booking || {};
-    const slots = bk.slots || [];
     const hint = $('#slotHint');
     const date = booking.date;
 
@@ -626,18 +972,20 @@
       return;
     }
 
-    // slots already taken on this device are blocked
-    const taken = {};
-    readLocalOrders().forEach((b) => {
-      if (b.date === date && b.slot) taken[b.slot] = (taken[b.slot] || 0) + 1;
-    });
-    const max = bk.maxPerSlot || 4;
+    const slots = allSlots();
+    const max = maxPerSlot();
+    const free = freeSlots(date).length;
 
     grid.innerHTML = slots.map((time) => {
-      const full = (taken[time] || 0) >= max;
-      return '<button type="button" class="slot' + (booking.slot === time ? ' is-active' : '') + '"' +
-        ' data-slot="' + esc(time) + '"' + (full ? ' disabled' : '') + '>' +
-        esc(time) + '</button>';
+      const left = max - takenCount(date, time);
+      const full = left <= 0;
+      return '<button type="button" class="slot' + (booking.slot === time ? ' is-active' : '') + '"'
+        + ' data-slot="' + esc(time) + '"' + (full ? ' disabled aria-disabled="true"' : '')
+        + ' aria-label="' + esc(time + (full ? ' — fully booked' : '')) + '">'
+        + esc(time)
+        + (full ? '<span class="slot__state">Full</span>'
+               : left === 1 ? '<span class="slot__state">1 left</span>' : '')
+        + '</button>';
     }).join('');
 
     $$('.slot', grid).forEach((btn) => {
@@ -653,7 +1001,9 @@
     if (hint) {
       hint.textContent = booking.slot
         ? 'Booked for ' + prettyDate(date) + ' at ' + booking.slot + '.'
-        : 'Pick a time for ' + prettyDate(date) + '.';
+        : free === 0
+          ? 'Every time on ' + prettyDate(date) + ' is taken — pick another day.'
+          : 'Pick a time for ' + prettyDate(date) + '. ' + free + ' of ' + slots.length + ' still free.';
     }
   }
 
@@ -728,10 +1078,32 @@
       .slice(0, 40);
   }
 
+  // the page name they typed — kept for this tab, so moving from Home to
+  // Booking (or to Pricing) does not lose it
+  const FLOW_NAME_KEY = 'tapasul_freename_v1';
+
+  function saveFlowName() {
+    try {
+      if (consentState() === 'declined') return;
+      if (flow.name) sessionStorage.setItem(FLOW_NAME_KEY, flow.name);
+      else sessionStorage.removeItem(FLOW_NAME_KEY);
+    } catch (e) { /* private mode */ }
+  }
+
+  function restoreFlowName() {
+    try {
+      const v = sessionStorage.getItem(FLOW_NAME_KEY);
+      if (!v) return;
+      flow.name = v;
+      flow.slug = slugify(v);
+    } catch (e) { /* nothing stored */ }
+  }
+
   // the name they typed for their page
   function setFlowName(value) {
     flow.name = String(value || '').trim();
     flow.slug = slugify(flow.name);
+    saveFlowName();
     const hint = $('#profileNameHint');
     if (hint) hint.textContent = flow.slug ? '' : 'Type your name so we can set up your page.';
     return flow.slug;
@@ -815,7 +1187,8 @@
           if (input) input.focus();
           return;
         }
-        scrollToSection((CFG.showcase.cta && CFG.showcase.cta.next) || '#inside');
+        const next = (CFG.showcase.cta && CFG.showcase.cta.next) || '#compare';
+        scrollToSection($(next) ? next : '#compare');
       });
     }
   }
@@ -865,9 +1238,44 @@
     }
   }
 
+  /* ------------------------------------------------------------------ *
+   * the site is split into pages now, so a link to "#preorder" has to
+   * become "booking.html#preorder" when the form is not on this page
+   * ------------------------------------------------------------------ */
+  const SECTION_PAGE = {
+    home: 'index.html',
+    live: 'index.html',
+    products: 'pricing.html',
+    compare: 'pricing.html',
+    inside: 'pricing.html',
+    work: 'index.html',
+    team: 'about.html',
+    faq: 'faq.html',
+    support: 'support.html',
+    privacy: 'support.html',
+    delivery: 'booking.html',
+    preorder: 'booking.html',
+  };
+
+  function pageForSection(id) {
+    return SECTION_PAGE[String(id).replace(/^#/, '')] || '';
+  }
+
+  // the booking page can be opened with a card already chosen
+  function goToBooking(productId) {
+    if ($('#preOrderForm')) { scrollToSection('#preorder'); return; }
+    const q = productId ? '?product=' + encodeURIComponent(productId) : '';
+    location.href = 'booking.html' + q + '#preorder';
+  }
+
   // scrolls to a section, clearing the sticky header
   function scrollToSection(selector) {
-    const el = typeof selector === 'string' ? $(selector) : selector;
+    let el = typeof selector === 'string' ? $(selector) : selector;
+    if (!el && typeof selector === 'string') {
+      const page = pageForSection(selector);
+      if (page) location.href = page + selector;
+      return;
+    }
     if (!el) return;
     const offset = CFG.features.scrollOffsetPx || 88;
     const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -938,7 +1346,7 @@
     if (fb) {
       const list = cfg.featured || [];
       const pick = (CFG.booking && CFG.booking.featurePick) || {};
-      const max = typeof pick.max === 'number' ? pick.max : 2;
+      const max = typeof pick.max === 'number' ? pick.max : 1;
       fb.innerHTML =
         '<div class="inside__featured-head">'
         +   '<h3>' + esc(cfg.featuredTitle || '') + '</h3>'
@@ -946,7 +1354,9 @@
         + '</div>'
         + '<div class="inside__featured-rules">'
         +   '<div class="inside__rule"><span class="inside__rule-dot inside__rule-dot--std"></span>' +
-              '<span><b>Standard card</b>Choose any ' + max + ' features from this list</span></div>'
+              '<span><b>Standard card</b>' + (max === 1
+                ? 'Choose 1 feature from this list'
+                : 'Choose any ' + max + ' features from this list') + '</span></div>'
         +   '<div class="inside__rule"><span class="inside__rule-dot inside__rule-dot--prm"></span>' +
               '<span><b>Premium card</b>Every feature here is included</span></div>'
         + '</div>'
@@ -967,6 +1377,78 @@
     }
   }
 
+  /* ------------------------------------------------------------------ *
+   * the comparison table on the pricing page (site.config.js -> compare)
+   * ------------------------------------------------------------------ */
+  function compareCell(v) {
+    if (v === true) return '<span class="cmp__yes" aria-label="Included">' + icon('check', 16) + '</span>';
+    if (v === false || v === null || v === undefined || v === '') {
+      return '<span class="cmp__no" aria-label="Not included">&mdash;</span>';
+    }
+    return esc(String(v));
+  }
+
+  function renderCompare() {
+    const wrap = $('#compareTable');
+    const cfg = CFG.compare;
+    if (!wrap || !cfg) return;
+
+    const cols = (cfg.columns || []).map((c) => {
+      const p = P[c.product] || {};
+      return {
+        label: c.label || p.shortName || p.name || '',
+        note: c.note || '',
+        accent: !!c.accent,
+        price: typeof p.price === 'number' ? money(p.price) : '',
+        montly: p.monthly ? money(p.monthly) + ' / month' : 'No monthly fee',
+      };
+    });
+
+    const head = '<thead><tr>' +
+      '<th scope="col" class="cmp__corner"><span class="cmp__corner-label">What you get</span></th>' +
+      cols.map((c) => '<th scope="col" class="cmp__col' + (c.accent ? ' is-accent' : '') + '">' +
+          '<span class="cmp__col-name">' + esc(c.label) + '</span>' +
+          (c.price ? '<span class="cmp__col-price">' + esc(c.price) + '</span>' : '') +
+          (c.montly ? '<span class="cmp__col-meta">' + esc(c.montly) + '</span>' : '') +
+          (c.note ? '<span class="cmp__col-note">' + esc(c.note) + '</span>' : '') +
+        '</th>').join('') +
+      '</tr></thead>';
+
+    const body = (cfg.groups || []).map((g) => {
+      let rows = g.rows || [];
+      if (g.auto === 'features') {
+        rows = ((CFG.inside && CFG.inside.featured) || []).map((f) => ({
+          label: f.title,
+          values: ['Limited', true],
+        }));
+      }
+      if (!rows.length) return '';
+      return '<tbody>' +
+        '<tr class="cmp__group"><th scope="rowgroup" colspan="' + (cols.length + 1) + '">' + esc(g.title) + '</th></tr>' +
+        rows.map((r) => '<tr>' +
+          '<th scope="row" class="cmp__row-label">' + esc(r.label) + '</th>' +
+          cols.map((c, i) => '<td class="cmp__cell' + (c.accent ? ' is-accent' : '') + '">' +
+            compareCell((r.values || [])[i]) + '</td>').join('') +
+        '</tr>').join('') +
+        '</tbody>';
+    }).join('');
+
+    const foot = '<tfoot><tr>' +
+      '<th scope="row" class="cmp__row-label"></th>' +
+      cols.map((c) => '<td class="cmp__cell' + (c.accent ? ' is-accent' : '') + '">' +
+        '<button type="button" class="btn btn--' + (c.accent ? 'primary' : 'ghost') + ' btn--sm cmp__cta" data-compare-pick="' + i2p(c) + '">Choose ' + esc(c.label) + '</button>' +
+      '</td>').join('') +
+      '</tr></tfoot>';
+
+    wrap.innerHTML = head + body + foot;
+
+    function i2p(c) {
+      const hit = (cfg.columns || []).filter((x) => (x.label || '') === c.label)[0];
+      const p = hit ? P[hit.product] : null;
+      return p ? p.id : '';
+    }
+  }
+
   function renderAll() {
     const order = CFG.pricing.order;
 
@@ -982,6 +1464,7 @@
 
     renderShowcase();
     renderInside();
+    renderCompare();
     renderMyWork();
 
     const faq = $('#faqList');
@@ -2005,10 +2488,12 @@
    * ------------------------------------------------------------------ */
   function init() {
     initConsent();
+    restoreFlowName();
     applyBrand();
     applyContent();
     renderAll();
     initNav();
+    initWorkLightbox();
     initForm();
     injectStructuredData();
     initAnalytics();
@@ -2016,7 +2501,17 @@
     // pricing interactions
     document.addEventListener('click', (e) => {
       const sel = e.target.closest('[data-select-product]');
-      if (sel) { selectProduct(sel.dataset.selectProduct); }
+      if (sel) {
+        selectProduct(sel.dataset.selectProduct);
+        // the product cards live on Home and Pricing; the form lives on Booking
+        if (!sel.closest('#preOrderForm')) goToBooking(sel.dataset.selectProduct);
+      }
+      // "Choose Standard / Premium" in the comparison table
+      const cmp = e.target.closest('[data-compare-pick]');
+      if (cmp && cmp.dataset.comparePick) {
+        selectProduct(cmp.dataset.comparePick);
+        goToBooking(cmp.dataset.comparePick);
+      }
       // "Book the premium card" from the comparison section
       const pick = e.target.closest('[data-inside-pick]');
       if (pick) {
@@ -2031,7 +2526,7 @@
         calculateTotal();
         // step 3 of the flow: everything they typed comes with them
         applyFlowToForm();
-        scrollToSection('#preorder');
+        goToBooking(productId);
       }
     });
     document.addEventListener('change', (e) => {
@@ -2092,6 +2587,12 @@
     });
   }
 
-  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
-  else init();
+  // tells the boot-check banner that everything loaded and ran
+  function boot() {
+    init();
+    document.documentElement.dataset.siteReady = '1';
+  }
+
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot);
+  else boot();
 })();

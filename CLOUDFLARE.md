@@ -124,6 +124,11 @@ The site now ships with a Cloudflare Function at `functions/api/bookings.js`.
 Every booking is saved in a **Cloudflare D1** database and emailed to
 `tapasul.digitalcard@gmail.com`, and `admin.html` reads them all back from D1.
 
+A second Function, `functions/api/availability.js`, uses the same `DB` binding
+to tell the booking form which days and times are already full (counts only —
+it never returns a customer's details), so filled slots are greyed out for the
+next visitor. Nothing extra to configure: deploy the folder and it works.
+
 You have to connect it once, in the dashboard:
 
 1. Create the database and run `schema.sql` — **Step 1** in `BOOKING-SETUP.md`.

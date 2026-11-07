@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-page="home">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -248,7 +248,7 @@
     <span class="load-error__icon" aria-hidden="true">!</span>
     <span class="load-error__body">
       <strong>This page did not finish loading.</strong>
-      index.html arrived, but the rest of the site did not. The whole folder has to
+      This page arrived, but the rest of the site did not. The whole folder has to
       be uploaded together &mdash; <b>script.js</b>, <b>site.config.js</b>, <b>logo.js</b>
       and the <b>assets/</b> folder must all sit next to index.html. Then refresh.
     </span>
@@ -278,7 +278,7 @@
   <!-- ================= HEADER ================= -->
   <header class="header">
     <div class="container header__inner">
-      <a href="#home" class="logo" aria-label="TapAsul — home">
+      <a href="index.html" class="logo" aria-label="TapAsul — home">
         <span class="logo__mark" aria-hidden="true">
           <img src="assets/logo-frog.svg" alt="" width="24" height="31" data-logo="mark">
         </span>
@@ -286,16 +286,16 @@
       </a>
 
       <nav class="nav" aria-label="Primary">
-        <a href="#products" data-text="content.nav.products">Products &amp; Pricing</a>
-        <a href="#work" data-text="content.nav.work">My work</a>
-        <a href="#faq" data-text="content.nav.faq">FAQ</a>
-        <a href="#team" data-text="content.nav.team">Team</a>
+        <a href="index.html" class="is-active" aria-current="page" data-text="content.nav.home">Home</a>
+        <a href="pricing.html" data-text="content.nav.products">Product &amp; Pricing</a>
+        <a href="about.html" data-text="content.nav.about">About Us</a>
+        <a href="booking.html" data-text="content.nav.booking">Booking</a>
       </nav>
 
       <div class="header__cta">
-        <a href="#preorder" class="btn btn--primary btn--sm">
+        <a href="booking.html" class="btn btn--primary btn--sm">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
-          <span class="cta-label" data-text="content.nav.order">Book Now</span>
+          <span class="cta-label" data-text="content.nav.order">Order Now</span>
         </a>
 
         <button class="nav-toggle" type="button" id="navToggle"
@@ -310,17 +310,16 @@
   <!-- mobile drawer -->
   <div class="drawer" id="mobileDrawer">
     <ul>
-      <li><a href="#products" data-text="content.nav.products">Products &amp; Pricing</a></li>
-      <li><a href="#work" data-text="content.nav.work">My work</a></li>
-      <li><a href="#faq" data-text="content.nav.faq">FAQ</a></li>
-      <li><a href="#team" data-text="content.nav.team">Team</a></li>
-      <li><a href="#preorder" data-text="content.nav.order">Book</a></li>
+      <a href="index.html" data-text="content.nav.home">Home</a>
+      <a href="pricing.html" data-text="content.nav.products">Product &amp; Pricing</a>
+      <a href="about.html" data-text="content.nav.about">About Us</a>
+      <a href="booking.html" data-text="content.nav.booking">Booking</a>
     </ul>
-    <a href="#preorder" class="btn btn--primary btn--block" data-text="content.hero.ctaPrimary">Book your TapAsul</a>
+    <a href="booking.html" class="btn btn--primary btn--block" data-text="content.nav.order">Order Now</a>
   </div>
 
   <main id="main">
-    <!-- ================= HERO ================= -->
+<!-- ================= HERO ================= -->
     <section class="hero" id="home">
       <div class="container hero__grid">
         <div>
@@ -337,7 +336,7 @@
           </p>
 
           <div class="hero__actions">
-            <a href="#preorder" class="btn btn--primary btn--lg">
+            <a href="booking.html#preorder" class="btn btn--primary btn--lg">
               <span data-text="content.hero.ctaPrimary">Order your TapAsul</span>
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
             </a>
@@ -366,32 +365,52 @@
       </div>
     </section>
 
-    <!-- ================= PRODUCTS ================= -->
-    <section class="section section--alt" id="products">
+    
+
+<!-- ================= MY WORK ================= -->
+    <section class="section" id="work">
       <div class="container">
         <div class="section-head">
-          <h2 data-text="content.sections.products.title">Our hardware products</h2>
-          <p data-text="content.sections.products.sub">Choose the perfect smart solution for your personal brand or retail storefront.</p>
+          <span class="eyebrow" data-text="content.sections.work.eyebrow">My work</span>
+          <h2 data-text="content.sections.work.title">Cards we have made</h2>
+          <p data-text="content.sections.work.sub">Real TapAsul cards in the wild — tap a card to see it up close.</p>
         </div>
-        <div class="products-grid" id="productGrid" data-render="products">
-          <!-- placeholders shown while site.config.js is parsed; replaced by the real cards -->
-          <div class="product product--skeleton" aria-hidden="true">
-            <div class="skeleton" style="height:180px"></div>
-            <div class="skeleton" style="height:22px;width:70%;margin-top:14px"></div>
-            <div class="skeleton" style="height:14px;width:90%;margin-top:10px"></div>
-            <div class="skeleton" style="height:44px;margin-top:16px"></div>
-          </div>
-          <div class="product product--skeleton" aria-hidden="true">
-            <div class="skeleton" style="height:180px"></div>
-            <div class="skeleton" style="height:22px;width:60%;margin-top:14px"></div>
-            <div class="skeleton" style="height:14px;width:85%;margin-top:10px"></div>
-            <div class="skeleton" style="height:44px;margin-top:16px"></div>
-          </div>
+
+        <div class="work" id="workGrid">
+          <!-- rendered from site.config.js -> myWork.items -->
+        </div>
+
+        <!-- ============ WORK LIGHTBOX ============
+             Opens when a card is tapped: the picture at full size, zoomable,
+             with arrow keys / swipe to move between cards. -->
+        <div class="lightbox" id="workLightbox" hidden>
+          <div class="lightbox__backdrop" data-lb-close></div>
+          <figure class="lightbox__panel" role="dialog" aria-modal="true" aria-labelledby="lbTitle">
+            <button class="lightbox__close" type="button" data-lb-close aria-label="Close">&times;</button>
+            <div class="lightbox__viewport">
+              <button class="lightbox__nav lightbox__nav--prev" type="button" data-lb-prev aria-label="Previous card">&#8249;</button>
+              <button class="lightbox__nav lightbox__nav--next" type="button" data-lb-next aria-label="Next card">&#8250;</button>
+              <div class="lightbox__stage" id="lbStage">
+                <img class="lightbox__img" id="lbImg" alt="" decoding="async">
+              </div>
+            </div>
+            <figcaption class="lightbox__cap">
+              <div class="lightbox__text">
+                <strong id="lbTitle"></strong>
+                <span id="lbNote"></span>
+              </div>
+              <div class="lightbox__actions">
+                <a class="lightbox__link" id="lbLink" target="_blank" rel="noopener" hidden>Visit their page</a>
+                <a class="lightbox__link" id="lbRaw" target="_blank" rel="noopener">Open full size</a>
+              </div>
+            </figcaption>
+            <p class="lightbox__hint" id="lbHint">Tap the picture to zoom &middot; arrow keys to move &middot; Esc to close</p>
+          </figure>
         </div>
       </div>
     </section>
 
-    <!-- ================= LIVE PROFILES ================= -->
+<!-- ================= LIVE PROFILES ================= -->
     <section class="section section--tight" id="live">
       <div class="container">
         <div class="section-head">
@@ -416,342 +435,51 @@
       </div>
     </section>
 
-    <!-- ================= INSIDE THE CARD ================= -->
-    <section class="section section--alt" id="inside">
+    
+
+<!-- ================= PRODUCTS ================= -->
+    <section class="section section--alt" id="products">
       <div class="container">
         <div class="section-head">
-          <span class="eyebrow" data-text="content.sections.inside.eyebrow">Inside the card</span>
-          <h2 data-text="content.sections.inside.title">What a tap actually opens</h2>
-          <p data-text="content.sections.inside.sub">Your card is only the doorway. This is what sits behind it.</p>
+          <h2 data-text="content.sections.products.title">Our hardware products</h2>
+          <p data-text="content.sections.products.sub">Choose the perfect smart solution for your personal brand or retail storefront.</p>
         </div>
-
-        <div class="inside__compare" id="insideCompare">
-          <!-- rendered from site.config.js -> inside.columns -->
-        </div>
-      </div>
-    </section>
-
-    <!-- ================= 3D CUSTOMIZER ================= -->
-    <!-- ================= MY WORK ================= -->
-    <section class="section" id="work">
-      <div class="container">
-        <div class="section-head">
-          <span class="eyebrow" data-text="content.sections.work.eyebrow">My work</span>
-          <h2 data-text="content.sections.work.title">Cards we have made</h2>
-          <p data-text="content.sections.work.sub">Real TapAsul cards in the wild. Tap one to open the page behind it.</p>
-        </div>
-
-        <div class="work" id="workGrid">
-          <!-- rendered from site.config.js -> myWork.items -->
-        </div>
-      </div>
-    </section>
-
-    <!-- ================= FAQ ================= -->
-    <section class="section section--alt" id="faq">
-      <div class="container">
-        <div class="section-head">
-          <h2 data-text="content.sections.faq.title">Frequently asked questions</h2>
-          <p data-text="content.sections.faq.sub">Everything you need to know about TapAsul technology and ordering.</p>
-        </div>
-        <div class="faq" id="faqList" data-render="faq">
-          <!-- generated from site.config.js -->
-        </div>
-      </div>
-    </section>
-
-    <!-- ================= DELIVERY & SHIPPING ================= -->
-    <section class="section section--tight" id="delivery">
-      <div class="container">
-        <div class="section-head">
-          <h2 data-text="content.sections.delivery.title">Delivery &amp; shipping</h2>
-          <p data-text="content.sections.delivery.sub">How your order gets to you, and what it costs.</p>
-        </div>
-        <ol class="steps" id="deliverySteps">
-          <!-- generated from site.config.js -->
-        </ol>
-        <div class="delivery-grid" id="deliveryInfo">
-          <!-- generated from site.config.js -->
-        </div>
-        <p class="form-note" id="shippingNote"></p>
-      </div>
-    </section>
-
-    <!-- ================= SUPPORT ================= -->
-    <section class="section section--muted section--tight" id="support">
-      <div class="container">
-        <div class="section-head">
-          <h2 data-text="content.sections.support.title">Support &amp; contact</h2>
-          <p data-text="content.sections.support.sub">Talk to a human before or after you order.</p>
-        </div>
-        <div class="support-grid" id="supportGrid">
-          <!-- generated from site.config.js -->
-        </div>
-        <p class="form-note" id="supportNote"></p>
-      </div>
-    </section>
-
-    <!-- ================= TEAM ================= -->
-    <section class="section section--muted" id="team">
-      <div class="container">
-        <div class="section-head">
-          <h2 data-text="content.sections.team.title">Meet the leadership</h2>
-          <p data-text="content.sections.team.sub">The team driving contactless technology and modern digital solutions.</p>
-        </div>
-        <div class="team-grid" id="teamGrid" data-render="team">
-          <!-- generated from site.config.js -->
-        </div>
-      </div>
-    </section>
-
-    <!-- ================= BOOKING ================= -->
-    <section class="section booking" id="preorder">
-      <form class="container" id="preOrderForm" novalidate>
-
-        <!-- ── header bar ── -->
-        <div class="booking__head">
-          <div>
-            <span class="booking__eyebrow" id="bookingEyebrow">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>
-              Complete your booking
-            </span>
-            <p class="booking__status" id="bookingStatus">Booking status · 1 card · confirmation by email</p>
+        <div class="products-grid" id="productGrid" data-render="products">
+          <!-- placeholders shown while site.config.js is parsed; replaced by the real cards -->
+          <div class="product product--skeleton" aria-hidden="true">
+            <div class="skeleton" style="height:180px"></div>
+            <div class="skeleton" style="height:22px;width:70%;margin-top:14px"></div>
+            <div class="skeleton" style="height:14px;width:90%;margin-top:10px"></div>
+            <div class="skeleton" style="height:44px;margin-top:16px"></div>
           </div>
-          <a href="#work" class="btn btn--glass btn--sm" id="bookingBack">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5"/><path d="m12 19-7-7 7-7"/></svg>
-            See my work
-          </a>
-        </div>
-
-        <!-- ── the three panels ── -->
-        <div class="booking__grid">
-
-          <!-- 1 · WHAT YOU'RE BOOKING -->
-          <section class="glass glass--types" aria-labelledby="bookingTypesLabel">
-            <header class="glass__head">
-              <h3 id="bookingTypesLabel" data-text="content.form.typeLegend">What you're booking</h3>
-              <span class="glass__badge" id="bookingTypeBadge">1 card</span>
-            </header>
-
-            <div class="booking__types" id="bookingTypes"></div>
-
-            <div class="booking__qty">
-              <span class="field-label" id="qtyLabel" data-text="content.form.qtyLabel">Quantity</span>
-              <div class="qty" role="group" aria-labelledby="qtyLabel">
-                <button type="button" id="qtyMinus" aria-label="Decrease quantity">−</button>
-                <input type="number" id="orderQty" name="quantity" value="1" min="1" max="999"
-                       inputmode="numeric" aria-label="Quantity">
-                <button type="button" id="qtyPlus" aria-label="Increase quantity">+</button>
-              </div>
-            </div>
-
-            <!-- the customer's free profile page, claimed during booking -->
-            <div class="booking__freepage" id="bookingFreePage">
-              <h4 class="freepage__title" data-text="content.form.freePageTitle">Your free page</h4>
-              <p class="freepage__note" data-text="content.form.freePageNote">Every TapAsul card comes with its own profile page — free. We'll switch it on when your card is ready.</p>
-              <div class="showcase__url freepage__url">
-                <span class="showcase__urlBase">portal.tapasul.com/r/</span>
-                <input class="showcase__urlInput" id="bookingProfileName" type="text" maxlength="30"
-                       autocomplete="off" spellcheck="false" placeholder="yourname" aria-label="Your page name">
-              </div>
-              <p class="freepage__hint" data-text="content.form.freePageHint">Your name or your shop name — it saves as you type.</p>
-              <p class="freepage__echo" id="bookingProfileEcho" role="status"></p>
-            </div>
-
-            <!-- the "choose your 2 features" picker (Standard card) -->
-            <div class="feature-pick-card" id="featurePickCard">
-              <fieldset class="booking__features" id="featurePickBlock" hidden>
-                <legend class="field-label" id="featurePickLabel">Your 2 features</legend>
-                <p class="field__hint" id="featurePickHint"></p>
-                <div class="feature-chips" id="featurePickList">
-                  <!-- generated from site.config.js -> inside.featured -->
-                </div>
-                <p class="field__error" id="featurePickError" role="alert"></p>
-                <p class="feature-pick__saved" id="featurePickSaved"></p>
-              </fieldset>
-            </div>
-
-            <div class="booking__where">
-              <span class="field-label" data-text="content.form.locationLabel">Where we meet</span>
-              <p class="booking__where-name" id="bookingLocation"></p>
-              <p class="booking__where-note" id="bookingLocationNote"></p>
-              <p class="booking__where-note" id="bookingBring"></p>
-            </div>
-          </section>
-
-          <!-- 2 · APPOINTMENT DETAILS -->
-          <section class="glass glass--details" aria-labelledby="bookingDetailsLabel">
-            <header class="glass__head">
-              <h3 id="bookingDetailsLabel" data-text="content.steps.details.title">Appointment details</h3>
-              <span class="glass__badge glass__badge--ok">Free to book</span>
-            </header>
-
-            <div class="field">
-              <label for="bookingDate" data-text="content.form.dateLabel">Preferred date</label>
-              <input class="input" type="date" id="bookingDate" name="date" required aria-describedby="dateError">
-              <p class="field__error" id="dateError" role="alert"></p>
-            </div>
-
-            <div class="field">
-              <span class="field-label" id="slotLabel" data-text="content.form.slotLabel">Preferred time</span>
-              <div class="slots" id="slotGrid" role="radiogroup" aria-labelledby="slotLabel"></div>
-              <p class="field__hint" id="slotHint" role="status"></p>
-            </div>
-
-            <div class="two-col">
-              <div class="field">
-                <label for="customerName" data-text="content.form.nameLabel">Full name</label>
-                <input class="input" type="text" id="customerName" name="name" autocomplete="name"
-                       placeholder="e.g. Juan Dela Cruz" data-placeholder="content.form.namePlaceholder"
-                       required aria-describedby="nameError">
-                <p class="field__error" id="nameError" role="alert"></p>
-              </div>
-              <div class="field">
-                <label for="customerEmail" data-text="content.form.emailLabel">Email address</label>
-                <input class="input" type="email" id="customerEmail" name="email" autocomplete="email"
-                       placeholder="juan@example.com" data-placeholder="content.form.emailPlaceholder"
-                       required aria-describedby="emailError">
-                <p class="field__error" id="emailError" role="alert"></p>
-              </div>
-            </div>
-
-            <div class="two-col">
-              <div class="field">
-                <label for="customerPhone" data-text="content.form.phoneLabel">Mobile number</label>
-                <input class="input" type="tel" id="customerPhone" name="phone" autocomplete="tel"
-                       placeholder="09XX XXX XXXX" data-placeholder="content.form.phonePlaceholder"
-                       required aria-describedby="phoneError">
-                <p class="field__error" id="phoneError" role="alert"></p>
-              </div>
-              <div class="field">
-                <label for="paymentMethod" data-text="content.form.paymentLabel">Payment method</label>
-                <select class="input" id="paymentMethod" name="paymentMethod"></select>
-                <p class="field__hint" id="paymentHint"></p>
-              </div>
-            </div>
-
-            <div class="field">
-              <label for="shippingZone" data-text="content.form.zoneLabel">Delivery area</label>
-              <select class="input" id="shippingZone" name="shippingZone"></select>
-              <p class="field__hint" id="shippingHint"></p>
-            </div>
-
-            <div class="field">
-              <label for="customerAddress" data-text="content.form.addressLabel">Delivery address</label>
-              <textarea class="input" id="customerAddress" name="address" rows="2"
-                        data-placeholder="content.form.addressPlaceholder"
-                        placeholder="House no., street, barangay, city, province, ZIP"
-                        aria-describedby="addressError"></textarea>
-              <p class="field__error" id="addressError" role="alert"></p>
-              <p class="field__hint" id="addressHint"></p>
-            </div>
-
-            <div class="field">
-              <label for="bookingNotes" data-text="content.form.notesLabel">What should be on your card?</label>
-              <textarea class="input" id="bookingNotes" name="notes" rows="3"
-                        data-placeholder="content.form.notesPlaceholder"
-                        placeholder="Your name, job title, links, the colours you want…"></textarea>
-              <p class="field__hint" data-text="content.form.notesHint">Optional — but it saves a message later.</p>
-            </div>
-
-            <div class="booking__goodto">
-              <span class="field-label">Good to know</span>
-              <ul>
-                <li id="bookingDuration"></li>
-                <li id="bookingConfirmNote"></li>
-                <li id="bookingRescheduleNote"></li>
-                <li id="bookingCancelNote"></li>
-              </ul>
-            </div>
-          </section>
-
-          <!-- 3 · SUMMARY -->
-          <section class="glass glass--summary" aria-labelledby="bookingSummaryLabel">
-            <header class="glass__head">
-              <h3 id="bookingSummaryLabel" data-text="content.form.summaryTitle">Booking summary</h3>
-              <span class="glass__badge" id="bookingItemBadge">1 item</span>
-            </header>
-
-            <div class="summary__items" id="summaryItems"></div>
-
-            <div class="summary__promo">
-              <label class="field-label" for="promoCode" data-text="content.form.promoLabel">Promo code</label>
-              <div class="summary__promo-row">
-                <input class="input" type="text" id="promoCode" name="promo" placeholder="Enter code"
-                       autocomplete="off" spellcheck="false">
-                <button class="btn btn--glass btn--sm" type="button" id="promoApply" data-text="content.form.promoApply">Apply</button>
-              </div>
-              <p class="field__hint" id="promoHint" role="status"></p>
-            </div>
-
-            <dl class="summary__rows" id="summaryRows"></dl>
-
-            <div class="summary__total">
-              <div>
-                <span class="summary__total-label" data-text="content.form.totalLabel">Total due</span>
-                <span class="summary__recurring" id="displayHosting" hidden></span>
-              </div>
-              <strong id="displayTotal">₱0</strong>
-            </div>
-
-            <div class="form-status" id="formStatus" role="status" aria-live="polite"></div>
-          </section>
-        </div>
-
-        <!-- ── bottom bar: steps + the big confirm button ── -->
-        <div class="booking__bar">
-          <ol class="booking__steps" id="bookingSteps" aria-label="Booking progress">
-            <li class="is-done"><span class="booking__dot"></span>Card</li>
-            <li class="is-done"><span class="booking__dot"></span>Slot</li>
-            <li id="bookingStepDetails"><span class="booking__dot"></span>Details</li>
-            <li id="bookingStepConfirm"><span class="booking__dot"></span>Confirm</li>
-          </ol>
-
-          <button type="submit" class="booking__cta" id="submitBtn">
-            <span data-text="content.form.submit">Confirm booking</span>
-            <span class="booking__cta-total" id="bookingCtaTotal"></span>
-          </button>
-        </div>
-
-        <div class="booking__notes">
-          <p class="form-note" id="paymentNote"></p>
-          <p class="form-note">
-            <a href="#privacy" id="privacyLink" data-text="content.form.privacyLink">How we handle your data</a> —
-            <span id="privacyNote"></span>
-          </p>
-        </div>
-      </form>
-    </section>
-
-    <!-- ================= PRIVACY ================= -->
-    <section class="section section--tight section--muted" id="privacy">
-      <div class="container" style="max-width:720px;">
-        <h2 style="font-size:1.25rem;margin-bottom:14px;" data-text="content.privacy.title">Privacy notice</h2>
-        <div id="privacyBody" style="font-size:.875rem;color:var(--text-muted);display:grid;gap:10px;" data-privacy>
-          <p>
-            <strong>What we collect.</strong> Your name and email address, plus the product and
-            quantity you selected. Nothing else is captured by this page.
-          </p>
-          <p>
-            <strong>Why.</strong> Only to confirm and run your appointment and to contact you
-            about it. We do not use your details for unrelated marketing and we never sell them.
-          </p>
-          <p>
-            <strong>How long.</strong> Order records are kept for as long as needed to fulfil the
-            order and meet accounting requirements, then deleted.
-          </p>
-          <p>
-            <strong>Your rights.</strong> Under the Philippine Data Privacy Act of 2012 (RA 10173)
-            you can ask to see, correct, or delete your data at any time by emailing
-            <a href="#" id="privacyEmail" style="color:var(--brand-dark);text-decoration:underline;"></a>.
-          </p>
-          <p style="font-size:.8125rem;color:var(--text-faint);">
-            This is a plain-language summary, not legal advice. Have it reviewed before you start
-            collecting real customer data at scale.
-          </p>
+          <div class="product product--skeleton" aria-hidden="true">
+            <div class="skeleton" style="height:180px"></div>
+            <div class="skeleton" style="height:22px;width:60%;margin-top:14px"></div>
+            <div class="skeleton" style="height:14px;width:85%;margin-top:10px"></div>
+            <div class="skeleton" style="height:44px;margin-top:16px"></div>
+          </div>
         </div>
       </div>
     </section>
+
+    
+
+    <!-- ================= NEXT STEP ================= -->
+    <section class="page-cta">
+      <div class="container">
+        <div class="page-cta__inner">
+          <div>
+            <h2 data-text="content.ctaBand.title">Ready when you are</h2>
+            <p data-text="content.ctaBand.sub">Pick a date, bring your logo if you have one, and we will set the card up in the appointment.</p>
+          </div>
+          <div class="page-cta__actions">
+            <a href="booking.html" class="btn btn--primary" data-text="content.ctaBand.primary">Book an appointment</a>
+            <a href="pricing.html" class="btn btn--ghost" data-text="content.ctaBand.secondary">See the prices</a>
+          </div>
+        </div>
+      </div>
+    </section>
+
   </main>
 
   <!-- ================= FOOTER ================= -->
@@ -759,7 +487,7 @@
     <div class="container">
       <div class="footer__grid">
         <div>
-          <a href="#home" class="logo" aria-label="TapAsul — home">
+          <a href="index.html" class="logo" aria-label="TapAsul — home">
             <span class="logo__mark" aria-hidden="true">
               <img src="assets/logo-frog-white.svg" alt="" width="24" height="31" data-logo="mark-white">
             </span>
@@ -771,12 +499,21 @@
         <div>
           <h4 data-text="content.footer.exploreTitle">Explore</h4>
           <ul>
-            <li><a href="#products" data-text="content.nav.products">Products &amp; Pricing</a></li>
-            <li><a href="#live" data-text="content.nav.live">Live profiles</a></li>
+            <li><a href="pricing.html" data-text="content.nav.products">Product &amp; Pricing</a></li>
+            <li><a href="index.html#live" data-text="content.nav.live">Live profiles</a></li>
             <li><a href="features.html" data-text="content.nav.features">Inside the card</a></li>
-            <li><a href="#work" data-text="content.nav.work">My work</a></li>
-            <li><a href="#faq" data-text="content.nav.faq">FAQ</a></li>
-            <li><a href="#preorder" data-text="content.nav.order">Pre-Order</a></li>
+            <li><a href="index.html#work" data-text="content.nav.work">My work</a></li>
+            <li><a href="booking.html" data-text="content.nav.booking">Booking</a></li>
+          </ul>
+        </div>
+
+        <div>
+          <h4 data-text="content.footer.helpTitle">Help</h4>
+          <ul>
+            <li><a href="faq.html" data-text="content.nav.faq">FAQ</a></li>
+            <li><a href="support.html" data-text="content.nav.support">Contact &amp; Support</a></li>
+            <li><a href="booking.html#delivery" data-text="content.footer.delivery">Delivery &amp; shipping</a></li>
+            <li><a href="support.html#privacy" data-text="content.footer.privacyNote">Your data</a></li>
           </ul>
         </div>
 
@@ -793,7 +530,7 @@
             <li><a href="terms.html" data-text="content.footer.terms">Terms of Use</a></li>
             <li><a href="refund.html" data-text="content.footer.refund">Refund Policy</a></li>
             <li><a href="privacy-policy.html" data-text="content.footer.privacy">Privacy Policy</a></li>
-            <li><a href="#delivery" data-text="content.footer.delivery">Delivery &amp; shipping</a></li>
+            <li><a href="refund-policy.html" data-text="content.footer.refundFull">Full refund terms</a></li>
           </ul>
         </div>
       </div>
@@ -801,7 +538,6 @@
       <div class="footer__bottom">
         <span>© <span id="year"></span> <span data-brand-name>TapAsul</span>. <span data-text="content.footer.copyright">All rights reserved.</span></span>
         <span data-text="content.hero.pill">More Than Just A Tap</span>
-        <a class="footer__admin" href="admin.html" rel="nofollow noindex">Admin</a>
       </div>
     </div>
   </footer>
@@ -826,6 +562,6 @@
        `node tools/update-csp-hash.js` so the SHA-256 hash in _headers
        matches again (Cloudflare blocks it otherwise).
        ------------------------------------------------------------------ -->
-  <script id="bootCheck">(function(){function fail(){if(window.TAPASUL_CONFIG&&document.querySelector(".product"))return;var el=document.getElementById("loadError");if(el)el.hidden=false;}function wire(){var b=document.getElementById("loadErrorClose");if(b)b.addEventListener("click",function(){var el=document.getElementById("loadError");if(el)el.hidden=true;});}if(document.readyState==="complete"){setTimeout(fail,1200);wire();}else{window.addEventListener("load",function(){setTimeout(fail,1200);wire();});}})();</script>
+  <script id="bootCheck">(function(){function fail(){if(document.documentElement.dataset.siteReady==="1")return;var el=document.getElementById("loadError");if(el)el.hidden=false;}function wire(){var b=document.getElementById("loadErrorClose");if(b)b.addEventListener("click",function(){var el=document.getElementById("loadError");if(el)el.hidden=true;});}if(document.readyState==="complete"){setTimeout(fail,1200);wire();}else{window.addEventListener("load",function(){setTimeout(fail,1200);wire();});}})();</script>
 </body>
 </html>

@@ -49,11 +49,12 @@
 
     var meta = document.getElementById('legalMeta');
     if (meta) {
+      // one label + one value per row, so the two columns line up
       meta.innerHTML =
-        '<div><strong>Operator</strong>' + esc(legal.businessStyle || legal.companyName || '') + '</div>' +
-        '<div><strong>Contact</strong><a href="mailto:' + esc(legal.email || '') + '">' + esc(legal.email || '') + '</a></div>' +
-        '<div><strong>Data Protection Officer</strong><a href="mailto:' + esc(legal.dpoEmail || '') + '">' + esc(legal.dpoEmail || '') + '</a></div>' +
-        '<div><strong>Last updated</strong>' + esc(pages.updated || '') + '</div>';
+        '<div><strong>Operator</strong><span>' + esc(legal.businessStyle || legal.companyName || '') + '</span></div>' +
+        '<div><strong>Contact</strong><span><a href="mailto:' + esc(legal.email || '') + '">' + esc(legal.email || '') + '</a></span></div>' +
+        '<div><strong>Data Protection Officer</strong><span><a href="mailto:' + esc(legal.dpoEmail || '') + '">' + esc(legal.dpoEmail || '') + '</a></span></div>' +
+        '<div><strong>Last updated</strong><span>' + esc(pages.updated || '') + '</span></div>';
     }
 
     var body = document.getElementById('legalBody');
@@ -85,6 +86,45 @@
     }
   }
 
-  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', render);
-  else render();
+  // the legal pages are plain (no script.js), so the menu button is wired here
+  function menu() {
+    var toggle = document.getElementById('navToggle');
+    var drawer = document.getElementById('mobileDrawer');
+    if (!toggle || !drawer) return;
+
+    function setOpen(open) {
+      toggle.setAttribute('aria-expanded', String(open));
+      toggle.setAttribute('aria-label', open ? 'Close menu' : 'Open menu');
+      drawer.classList.toggle('is-open', open);
+      drawer.hidden = !open;
+      document.body.style.overflow = open ? 'hidden' : '';
+    }
+
+    drawer.hidden = true;
+    toggle.addEventListener('click', function () {
+      setOpen(toggle.getAttribute('aria-expanded') !== 'true');
+    });
+    drawer.addEventListener('click', function (e) { if (e.target.closest('a')) setOpen(false); });
+    document.addEventListener('keydown', function (e) { if (e.key === 'Escape') setOpen(false); });
+    window.addEventListener('resize', function () { if (window.innerWidth >= 900) setOpen(false); });
+  }
+
+  // pages that ship their own static copy (refund.html) still need the year
+  // and the "other legal pages" links filled in
+  function statics() {
+    var year = document.getElementById('year');
+    if (year) year.textContent = new Date().getFullYear();
+
+    var links = document.getElementById('legalLinks');
+    if (links && !links.children.length) {
+      links.innerHTML = [['terms', 'Terms of Use'], ['refund', 'Refund Policy'], ['privacy', 'Privacy Policy']]
+        .map(function (p) { return '<a href="' + p[0] + '.html">' + p[1] + '</a>'; })
+        .join('');
+    }
+  }
+
+  function start() { render(); statics(); menu(); }
+
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start);
+  else start();
 })();

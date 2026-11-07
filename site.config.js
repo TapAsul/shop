@@ -116,15 +116,15 @@ window.TAPASUL_CONFIG = {
     // Put a deposit on the booking. 0 = the customer pays the full amount.
     depositPercent: 0,                 // ← CHANGE ME e.g. 30 to take a 30% deposit
 
-    // ── "Choose your 2 features" picker ──────────────────────────────
+    // ── "Choose your feature" picker ─────────────────────────────────
     // Only shown for the booking types listed in `appliesTo` (the
     // Standard card). The options come from inside.featured above.
     // Set `enabled: false` to hide the picker completely.
     featurePick: {
       enabled: true,
-      max: 2,                         // how many the customer may pick
-      label: "Your 2 features",
-      note: "Your Standard card includes any 2 features. Pick yours below.",
+      max: 1,                         // how many the customer may pick
+      label: "Your feature",
+      note: "Your Standard card includes one feature of your choice. Pick it below.",
       premiumNote: "Premium includes every feature — nothing to pick.",
       appliesTo: ["standard", "custom"],
     },
@@ -157,6 +157,65 @@ window.TAPASUL_CONFIG = {
      Any name that does not have a live page yet should be removed, or given
      its own `href` pointing where it actually lives.
      ------------------------------------------------------------------------- */
+  /* -------------------------------------------------------------------------
+     8b. THE COMPARISON TABLE  (Product & Pricing page)
+     -------------------------------------------------------------------------
+     One row per difference. A value can be:
+        true            -> a tick
+        false           -> a dash (not included)
+        "any text"      -> the text
+     "auto:features" is filled in from inside.featured, so the list can never
+     drift away from the real features you sell.
+     ------------------------------------------------------------------------- */
+  compare: {
+    eyebrow: "Compare",
+    title: "Standard or Premium",
+    sub: "Same tap, same free page. The Premium card is the one with your own logo on it.",
+    columns: [
+      { product: "card",    label: "Standard", note: "Our artwork" },
+      { product: "premium", label: "Premium",  note: "Your own design", accent: true },
+    ],
+    groups: [
+      {
+        title: "The card itself",
+        rows: [
+          { label: "Card finish",        values: ["Sticker print on PVC", "UV-printed PVC"] },
+          { label: "Colours",            values: ["White and black", "Any colour and design"] },
+          { label: "Your own logo",      values: [false, true] },
+          { label: "NFC chip — tap to open", values: [true, true] },
+          { label: "QR code on the back",    values: [true, true] },
+          { label: "Free card holder",       values: [true, true] },
+        ],
+      },
+      {
+        title: "The page it opens",
+        rows: [
+          { label: "Your own profile page",        values: [true, true] },
+          { label: "Page address",                 values: ["portal.tapasul.com/r/yourname", "portal.tapasul.com/r/yourname"] },
+          { label: "Socials, links and contact card download", values: [true, true] },
+          { label: "Tap analytics",                values: [true, true] },
+          { label: "Hosting",                      values: ["\u20B1149 / month", "\u20B1299 / month"] },
+          { label: "Features you can switch on",   values: ["Pick only one", "All of them"] },
+        ],
+      },
+      {
+        title: "Features you can switch on",
+        auto: "features",
+      },
+      {
+        title: "Getting it made",
+        rows: [
+          { label: "Setup appointment",  values: ["About 30 minutes", "About 30 minutes"] },
+          { label: "Free revisions",     values: ["1 per month", "1 per month"] },
+          { label: "Free replacement",   values: [false, "1 free replacement"] },
+          { label: "Priority booking",   values: [false, true] },
+        ],
+      },
+    ],
+    note: "Hosting starts the month after your card is set up. Cancel anytime — your page stays live until the month you have paid for ends.",
+    cta: "Book an appointment",
+  },
+
   showcase: {
     eyebrow: "Live profiles",
     title: "Every card gets its own page",
@@ -185,7 +244,7 @@ window.TAPASUL_CONFIG = {
       nameLabel: "Your name or business",
       namePlaceholder: "yourname",
       button: "Claim my free page",
-      next: "#inside",         // where the button takes them next
+      next: "#compare",        // where the button takes them next
     },
   },
 
@@ -196,7 +255,7 @@ window.TAPASUL_CONFIG = {
         product: "card",
         name: "Standard Digital Card",
         priceLabel: "{card} once + {hosting}/month",
-        note: "Everything you need to get the contact — plus two features you pick yourself.",
+        note: "Everything you need to get the contact — plus one feature you pick yourself.",
         cta: "Book the standard card",
         items: [
           { title: "Profile picture",      text: "One photo at the top of your profile" },
@@ -204,7 +263,7 @@ window.TAPASUL_CONFIG = {
           { title: "Bio",                  text: "A short paragraph about you or your business" },
           { title: "3 social media links", text: "Pick the three that matter" },
           { title: "Contact info",         text: "Your email and your contact number" },
-          { title: "2 features of your choice", text: "Choose any two from the Featured list", highlight: true,
+          { title: "1 feature of your choice", text: "Choose one from the Featured list", highlight: true,
             link: { label: "Check the features", href: "features.html" } },
         ],
       },
@@ -231,7 +290,7 @@ window.TAPASUL_CONFIG = {
     // booking form reads this same list, so there is only ever ONE list
     // to edit. Remove a line here and it disappears from both places.
     featuredTitle: "The Featured features",
-    featuredSub: "Standard card — choose any 2 of these. Premium card — every single one is included.",
+    featuredSub: "Standard card — choose one of these. Premium card — every single one is included.",
     featured: [
       { icon: "star",      title: "Client Reviews",                text: "Let people rate you and read what they said." },
       { icon: "briefcase", title: "Portfolio",                     text: "Show the work you are proud of." },
@@ -428,7 +487,7 @@ window.TAPASUL_CONFIG = {
 
     eyebrow: "My work",
     title: "Cards we have made",
-    sub: "Real TapAsul cards in the wild. Tap one to open the page behind it.",
+    sub: "Real TapAsul cards in the wild — tap a card to see it up close.",
 
     // Add your photos of finished cards here.
     // 1. Put the picture files in  assets/work/
@@ -436,8 +495,18 @@ window.TAPASUL_CONFIG = {
     //    { image: "assets/work/kusina.jpg", title: "Kusina ni Maria",
     //      note: "Restaurant · Quezon City", href: "https://portal.tapasul.com/r/yourname" },
     //    title, note and href are optional — a picture on its own is fine.
+    //    Add "href" (e.g. the client's portal.tapasul.com/r/... page) and the
+    //    tile becomes clickable.
     items: [
-      // ← CHANGE ME: add your client work here
+      { image: "assets/work/jenny-steel.jpg",
+        title: "Jenny Joven Beria",
+        note: "Steel fabrication · ALR Steel Fabrication and Services OPC" },
+      { image: "assets/work/melbert-ramen.jpg",
+        title: "Melbert Pereda",
+        note: "Food industry · Founder & CEO, Brother's Ramen" },
+      { image: "assets/work/arcega-freelance.jpg",
+        title: "King Arcega",
+        note: "Freelancer · Affiliate marketing creator, theshop101.ph" },
     ],
   },
 
@@ -542,6 +611,40 @@ window.TAPASUL_CONFIG = {
        data-html="content.hero.headline"  -> text where *stars* become <em>
      ------------------------------------------------------------------------- */
   content: {
+    /* ---------------------------------------------------------------------
+       ONE PAGE, ONE JOB
+       The header has four links: Home, Product & Pricing, About Us, Booking.
+       Everything else (FAQ, contact, legal) lives in the footer. These are the
+       intro block on each of those pages.
+       --------------------------------------------------------------------- */
+    pages: {
+      pricing: {
+        eyebrow: "Product & Pricing",
+        title: "Two cards. One tap.",
+        sub: "Every TapAsul card opens your own page — no app, no extra fee. The difference is the card itself: our artwork, or your own logo and colours.",
+      },
+      about: {
+        eyebrow: "About Us",
+        title: "The people behind the tap",
+        sub: "A small team in Quezon City printing cards, writing the profile pages and answering the messages ourselves.",
+      },
+      booking: {
+        eyebrow: "Booking",
+        title: "Book your card appointment",
+        sub: "Pick a date and a time, tell us what should be printed on your card, and we will confirm by email within one business day.",
+      },
+      faq: {
+        eyebrow: "FAQ",
+        title: "Questions we get asked",
+        sub: "How the tap works, what hosting covers, and what happens after you order. If your question is not here, message us — we answer the same day.",
+      },
+      support: {
+        eyebrow: "Contact & Support",
+        title: "Talk to a real person",
+        sub: "Before you order, after you order, or two years later when you want your page changed — you are talking to the people who print the card.",
+      },
+    },
+
     // ── Browser tab + search results ────────────────────────────────────
     pageTitle: "TapAsul | Smart NFC Digital Cards",
     pageTitleSuffix: "Smart NFC Digital Cards",
@@ -555,14 +658,21 @@ window.TAPASUL_CONFIG = {
 
     // ── Menu ─────────────────────────────────────────────────────────────
     nav: {
-      products: "Products & Pricing",
+      // the four items in the header, in order
+      home: "Home",
+      products: "Product & Pricing",
+      about: "About Us",
+      booking: "Booking",
+      // the button on the right of the header
+      order: "Order Now",
+      // footer-only links (deliberately not in the header)
       work: "My work",
-      faq: "FAQ",
       team: "Team",
+      faq: "FAQ",
+      support: "Contact & Support",
       live: "Live profiles",
       inside: "Inside the card",
       features: "Inside the card",
-      order: "Book Now",
     },
 
     // ── Hero ─────────────────────────────────────────────────────────────
@@ -579,8 +689,8 @@ window.TAPASUL_CONFIG = {
     sections: {
       products:   { title: "Our digital card",  sub: "Two tiers, the same tap — the standard TapAsul card, or the Premium card with your own logo, colours and priority booking." },
       inside:     { eyebrow: "Inside the card", title: "What's inside your digital card?",
-                    sub: "The Standard card gives you the essentials plus two features you choose. The Premium card gives you all of it — every social link, every contact and every feature." },
-      work: { eyebrow: "My work", title: "Cards we have made", sub: "Real TapAsul cards in the wild. Tap one to open the page behind it." },
+                    sub: "The Standard card gives you the essentials plus one feature you choose. The Premium card gives you all of it — every social link, every contact and every feature." },
+      work: { eyebrow: "My work", title: "Cards we have made", sub: "Real TapAsul cards in the wild — tap a card to see it up close." },
       faq:        { title: "Frequently asked questions", sub: "Everything you need to know about TapAsul technology and booking." },
       team:       { title: "Meet the leadership", sub: "The team driving contactless technology and modern digital solutions." },
       preorder:   { title: "Book your card appointment", sub: "Pick a date and time, tell us about your card, and we'll confirm by email." },
@@ -722,7 +832,13 @@ window.TAPASUL_CONFIG = {
   seo: {
     // Extra pages listed in sitemap.xml.
     extraPages: [
-      { path: "/features.html",        priority: "0.7", changefreq: "monthly" },
+      { path: "/pricing.html",        priority: "0.9", changefreq: "monthly" },
+      { path: "/booking.html",        priority: "0.9", changefreq: "monthly" },
+      { path: "/about.html",          priority: "0.7", changefreq: "monthly" },
+      { path: "/faq.html",            priority: "0.6", changefreq: "monthly" },
+      { path: "/support.html",        priority: "0.6", changefreq: "monthly" },
+      { path: "/features.html",       priority: "0.7", changefreq: "monthly" },
+      { path: "/refund.html",         priority: "0.4", changefreq: "yearly" },
       { path: "/terms.html",          priority: "0.3", changefreq: "yearly" },
       { path: "/refund-policy.html",  priority: "0.3", changefreq: "yearly" },
       { path: "/privacy-policy.html", priority: "0.3", changefreq: "yearly" },
@@ -890,8 +1006,8 @@ window.TAPASUL_CONFIG = {
       lede: "What we collect, why we collect it, and how to get it deleted.",
       sections: [
         { heading: "1. Who is responsible for your data",
-          body: ["The data controller is " + "{company}" + ", " + "{address}" + ". Our Data Protection Officer can be reached at " + "{dpo}" + " (" + "{dpoEmail}" + ") or by post at the address above.",
-                 "You also reach us about your order at " + "{email}" + "."] },
+          body: ["The data controller is " + "{company}" + ", " + "{address}" + ". Our Data Protection Officer can be reached at " + "{dpoEmail}" + ".",
+                 "You can also contact us about your order at " + "{email}" + "."] },
         { heading: "2. What we collect",
           body: ["Order details: your name, email address, delivery address, the products and quantities you chose, your payment method choice, and the notes you send us.",
                  "Service details: when your profile is viewed or tapped, we record the date and time, a rough location derived from the IP address, and the device type. We do not collect the contact details of the person who taps your card.",

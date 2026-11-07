@@ -1,0 +1,16 @@
+# --- things that should never be committed -------------------------------
+.vscode/
+.DS_Store
+Thumbs.db
+*.log
+node_modules/
+.wrangler/
+
+# the old GitHub Pages copy of the site, if you keep one locally
+v2/
+
+# old prototypes from earlier versions — not part of this site
+three.min.js
+interactive.html
+projects.html
+tap-portfolio.html

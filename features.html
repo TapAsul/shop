@@ -7,10 +7,10 @@
 
   <!-- seo:begin — generated from site.config.js by `node tools/build-seo.js`. -->
   <title>What&#39;s inside your digital card? — TapAsul</title>
-  <meta name="description" content="Everything your TapAsul digital card holds: the standard card gives you the essentials plus two features you pick, the Premium card gives you everything.">
+  <meta name="description" content="Everything your TapAsul digital card holds: the standard card gives you the essentials plus one feature you pick, the Premium card gives you everything.">
   <link rel="canonical" href="https://tapasul.example/features.html">
   <meta property="og:title" content="What&#39;s inside your digital card? — TapAsul">
-  <meta property="og:description" content="Everything your TapAsul digital card holds: the standard card gives you the essentials plus two features you pick, the Premium card gives you everything.">
+  <meta property="og:description" content="Everything your TapAsul digital card holds: the standard card gives you the essentials plus one feature you pick, the Premium card gives you everything.">
   <meta property="og:url" content="https://tapasul.example/features.html">
   <meta property="og:type" content="website">
   <!-- seo:end -->
@@ -51,33 +51,35 @@
       </a>
 
       <nav class="nav" aria-label="Primary">
-        <a href="index.html#products" data-text="content.nav.products">Products &amp; Pricing</a>
-        <a href="index.html#work" data-text="content.nav.work">My work</a>
-        <a href="index.html#faq" data-text="content.nav.faq">FAQ</a>
-        <a href="index.html#team" data-text="content.nav.team">Team</a>
+        <a href="index.html">Home</a>
+        <a href="pricing.html">Product &amp; Pricing</a>
+        <a href="about.html">About Us</a>
+        <a href="booking.html">Booking</a>
       </nav>
 
       <div class="header__cta">
-        <a href="index.html#preorder" class="btn btn--primary btn--sm">
+        <a href="booking.html" class="btn btn--primary btn--sm">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
-          <span class="cta-label" data-text="content.nav.order">Book Now</span>
+          <span class="cta-label" data-text="content.nav.order">Order Now</span>
         </a>
-        <button class="nav-toggle" id="navToggle" type="button" aria-expanded="false" aria-controls="mobileDrawer" aria-label="Menu">
-          <span></span><span></span><span></span>
+        <button class="nav-toggle" type="button" id="navToggle" aria-expanded="false" aria-controls="mobileDrawer" aria-label="Open menu">
+          <svg class="nav-toggle__open" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M3 6h18M3 12h18M3 18h18"/></svg>
+          <svg class="nav-toggle__close" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M18 6L6 18M6 6l12 12"/></svg>
         </button>
       </div>
     </div>
-
-    <div class="mobile-drawer" id="mobileDrawer" hidden>
-      <a href="index.html#products" data-text="content.nav.products">Products &amp; Pricing</a>
-      <a href="index.html#live" data-text="content.nav.live">Live profiles</a>
-      <a href="features.html" data-text="content.nav.features">Inside the card</a>
-      <a href="index.html#work" data-text="content.nav.work">My work</a>
-      <a href="index.html#faq" data-text="content.nav.faq">FAQ</a>
-      <a href="index.html#team" data-text="content.nav.team">Team</a>
-      <a href="index.html#preorder" class="btn btn--primary btn--sm" data-text="content.nav.order">Book Now</a>
-    </div>
   </header>
+
+  <!-- mobile drawer -->
+  <div class="drawer" id="mobileDrawer">
+    <ul>
+      <li><a href="index.html" data-text="content.nav.home">Home</a></li>
+      <li><a href="pricing.html" data-text="content.nav.products">Product &amp; Pricing</a></li>
+      <li><a href="about.html" data-text="content.nav.about">About Us</a></li>
+      <li><a href="booking.html" data-text="content.nav.booking">Booking</a></li>
+    </ul>
+    <a href="booking.html" class="btn btn--primary btn--block" data-text="content.nav.order">Order Now</a>
+  </div>
 
   <!-- ================= WHAT'S INSIDE YOUR CARD ================= -->
   <main id="main">
@@ -86,7 +88,7 @@
         <div class="section-head">
           <span class="eyebrow" data-text="content.sections.inside.eyebrow">Inside the card</span>
           <h1 data-text="content.sections.inside.title">What's inside your digital card?</h1>
-          <p data-text="content.sections.inside.sub">The Standard card gives you the essentials plus two features you choose. The Premium card gives you all of it — every social link, every contact and every feature below.</p>
+          <p data-text="content.sections.inside.sub">The Standard card gives you the essentials plus one feature you choose. The Premium card gives you all of it — every social link, every contact and every feature below.</p>
         </div>
 
         <div class="inside__featured" id="insideFeatured">
@@ -114,12 +116,21 @@
         <div>
           <h4 data-text="content.footer.exploreTitle">Explore</h4>
           <ul>
-            <li><a href="index.html#products" data-text="content.nav.products">Products &amp; Pricing</a></li>
+            <li><a href="pricing.html" data-text="content.nav.products">Product &amp; Pricing</a></li>
             <li><a href="index.html#live" data-text="content.nav.live">Live profiles</a></li>
             <li><a href="features.html" data-text="content.nav.features">Inside the card</a></li>
             <li><a href="index.html#work" data-text="content.nav.work">My work</a></li>
-            <li><a href="index.html#faq" data-text="content.nav.faq">FAQ</a></li>
-            <li><a href="index.html#preorder" data-text="content.nav.order">Book Now</a></li>
+            <li><a href="booking.html" data-text="content.nav.booking">Booking</a></li>
+          </ul>
+        </div>
+
+        <div>
+          <h4 data-text="content.footer.helpTitle">Help</h4>
+          <ul>
+            <li><a href="faq.html" data-text="content.nav.faq">FAQ</a></li>
+            <li><a href="support.html" data-text="content.nav.support">Contact &amp; Support</a></li>
+            <li><a href="booking.html#delivery" data-text="content.footer.delivery">Delivery &amp; shipping</a></li>
+            <li><a href="support.html#privacy" data-text="content.footer.privacyNote">Your data</a></li>
           </ul>
         </div>
 
@@ -136,7 +147,7 @@
             <li><a href="terms.html" data-text="content.footer.terms">Terms of Use</a></li>
             <li><a href="refund.html" data-text="content.footer.refund">Refund Policy</a></li>
             <li><a href="privacy-policy.html" data-text="content.footer.privacy">Privacy Policy</a></li>
-            <li><a href="index.html#delivery" data-text="content.footer.delivery">Delivery &amp; shipping</a></li>
+            <li><a href="refund-policy.html" data-text="content.footer.refundFull">Full refund terms</a></li>
           </ul>
         </div>
       </div>
@@ -144,7 +155,6 @@
       <div class="footer__bottom">
         <span>© <span id="year"></span> <span data-brand-name>TapAsul</span>. <span data-text="content.footer.copyright">All rights reserved.</span></span>
         <span data-text="content.hero.pill">More Than Just A Tap</span>
-        <a class="footer__admin" href="admin.html" rel="nofollow noindex">Admin</a>
       </div>
     </div>
   </footer>
@@ -161,7 +171,7 @@
     <div class="noscript-note">
       <strong>JavaScript is turned off.</strong>
       The full list of what your card holds is on the
-      <a href="index.html#inside">Inside the card</a> section of the home page.
+      <a href="pricing.html#compare">product &amp; pricing page</a> section of the home page.
     </div>
   </noscript>
 </body>

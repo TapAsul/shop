@@ -103,10 +103,56 @@ function main() {
   ].join('\n');
   if (replaceBlock('admin.html', 'seo', adminHead)) console.log('  ✓ admin.html (noindex + title)');
 
+  // ---- the site's own pages: title, description, canonical, Open Graph ----
+  const sitePages = {
+    'pricing.html': {
+      title: 'Product & Pricing',
+      desc: 'Compare the Standard and Premium TapAsul NFC cards side by side: what is printed, what the free profile page holds, hosting and what is included.',
+    },
+    'booking.html': {
+      title: 'Book an appointment',
+      desc: 'Pick a date and time to have your TapAsul NFC card set up — tell us what to print, choose your features, and confirm by email.',
+    },
+    'about.html': {
+      title: 'About Us',
+      desc: 'The TapAsul team in Quezon City: who prints the cards, who writes the profile pages and who answers your messages.',
+    },
+    'faq.html': {
+      title: 'FAQ',
+      desc: 'How the TapAsul tap works, what the monthly hosting covers, what happens after you order, and what you can change later.',
+    },
+    'support.html': {
+      title: 'Contact & Support',
+      desc: 'Talk to TapAsul before or after you order — email, phone and the delivery details for your card.',
+    },
+  };
+
+  Object.keys(sitePages).forEach(function (file) {
+    const m = sitePages[file];
+    const url = base + '/' + file;
+    const head = [
+      '  <title>' + SEO.esc(m.title + ' — ' + cfg.brand.name) + '</title>',
+      '  <meta name="description" content="' + SEO.esc(m.desc) + '">',
+      '  <link rel="canonical" href="' + SEO.esc(url) + '">',
+      '  <meta property="og:type" content="website">',
+      '  <meta property="og:site_name" content="' + SEO.esc(cfg.brand.name) + '">',
+      '  <meta property="og:title" content="' + SEO.esc(m.title + ' — ' + cfg.brand.name) + '">',
+      '  <meta property="og:description" content="' + SEO.esc(m.desc) + '">',
+      '  <meta property="og:url" content="' + SEO.esc(url) + '">',
+      '  <meta property="og:image" content="' + SEO.esc(base + '/assets/social-preview.png') + '">',
+      '  <meta name="twitter:card" content="summary_large_image">',
+      '  <meta name="twitter:title" content="' + SEO.esc(m.title + ' — ' + cfg.brand.name) + '">',
+      '  <meta name="twitter:description" content="' + SEO.esc(m.desc) + '">',
+      '  <meta name="twitter:image" content="' + SEO.esc(base + '/assets/social-preview.png') + '">',
+    ].join('\n');
+    if (replaceBlock(file, 'seo', head)) console.log('  \u2713 ' + file + ' (meta + canonical)');
+    else console.log('  ! ' + file + ' — could not find the <!-- seo:begin --> markers');
+  });
+
   // the standalone "What's inside your digital card?" page
   const featuresTitle = (cfg.content && cfg.content.pageTitles && cfg.content.pageTitles.features)
     || "What's inside your digital card? — " + cfg.brand.name;
-  const featuresDesc = 'Everything your TapAsul digital card holds: the standard card gives you the essentials plus two features you pick, the Premium card gives you everything.';
+  const featuresDesc = 'Everything your TapAsul digital card holds: the standard card gives you the essentials plus one feature you pick, the Premium card gives you everything.';
   const featuresHead = [
     '  <title>' + SEO.esc(featuresTitle) + '</title>',
     '  <meta name="description" content="' + SEO.esc(featuresDesc) + '">',

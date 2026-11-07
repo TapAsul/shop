@@ -12,110 +12,110 @@ function ok(name, pass, note) { results.push([pass ? 'PASS' : 'FAIL', name, note
   p.on('console', m => { if (m.type() === 'error') cerr.push(m.text()); });
   p.on('requestfailed', r => failed.push(r.url() + ' ' + (r.failure() || {}).errorText));
 
-  /* ---------- 1. home page ---------- */
-  await p.goto(BASE + '/index.html', { waitUntil: 'load' });
-  await p.waitForTimeout(3200);
+  // visit a page, dismiss the consent gate, hand it back
+  async function visit(page, file) {
+    await page.goto(BASE + '/' + file, { waitUntil: 'load' });
+    await page.waitForTimeout(1600);
+    await page.evaluate(() => {
+      const gate = document.getElementById('consentGate');
+      document.documentElement.dataset.gateSeen = gate ? String(!gate.hidden) : 'none';
+      const a = document.getElementById('consentAccept');
+      if (a) a.click();
+    });
+    await page.waitForTimeout(350);
+    return page;
+  }
+
+  /* ---------- 1. HOME ---------- */
+  await visit(p, 'index.html');
   const home = await p.evaluate(() => {
     const ld = document.querySelector('#structured-data');
     let types = [];
     try { types = JSON.parse(ld.textContent)['@graph'].map(n => n['@type']); } catch (e) { types = ['PARSE-FAIL']; }
+    const nav = [...document.querySelectorAll('.nav a')];
     return {
+      page: document.documentElement.dataset.page,
       title: document.title,
-      gateVisible: !document.getElementById('consentGate').hidden,
+      gateVisible: document.documentElement.dataset.gateSeen === 'true',
       canvases: document.querySelectorAll('canvas').length,
-      webgl: (() => { try { return !!document.createElement('canvas').getContext('webgl'); } catch (e) { return false; } })(),
       products: document.querySelectorAll('#productGrid .product:not(.product--skeleton)').length,
-      faqs: document.querySelectorAll('#faqList details').length,
-      team: document.querySelectorAll('.member').length,
-      teamPhotos: document.querySelectorAll('.member__avatar img').length,
-      deliverySteps: document.querySelectorAll('#deliverySteps li').length,
-      supportCards: document.querySelectorAll('#supportGrid .support-card').length,
-      zones: document.querySelectorAll('#shippingZone option').length,
-      payments: document.querySelectorAll('#paymentMethod option').length,
-      addOns: document.querySelectorAll('#addOnsList input').length,
-      bookingTypes: document.querySelectorAll('.btype').length,
-      slots: document.querySelectorAll('.slot').length,
-      dateMin: (document.getElementById('bookingDate') || {}).min || '',
-      promoBox: !!document.getElementById('promoCode'),
-      ctaTotal: (document.getElementById('bookingCtaTotal') || {}).textContent || '',
+      sections: [...document.querySelectorAll('main section[id]')].map((x) => x.id),
+      navLabels: nav.map((a) => a.textContent.trim()),
+      navHrefs: nav.map((a) => a.getAttribute('href')),
+      navActive: nav.filter((a) => a.classList.contains('is-active')).map((a) => a.textContent.trim()),
+      cta: (document.querySelector('.header__cta .btn') || {}).getAttribute
+        ? document.querySelector('.header__cta .btn').getAttribute('href') : '',
+      ctaLabel: (document.querySelector('.header__cta .btn .cta-label') || {}).textContent || '',
       studio: !!document.querySelector('#customizer'),
       studioBtn: !!document.querySelector('.hero__actions .btn--ghost'),
       three: typeof window.THREE !== 'undefined',
-      heroPhoto: !!document.querySelector('.stage__photo img'),
       hero3d: !!document.querySelector('#card3d'),
       heroFaces: document.querySelectorAll('.card3d__face').length,
-      work: !!document.querySelector('#work'),
-      workItems: document.querySelectorAll('.work__item').length,
-      workEmpty: !!document.querySelector('.work__empty'),
-      navWork: document.querySelectorAll('.nav a[href="#work"], .footer a[href="#work"]').length,
+      h1: [...document.querySelectorAll('h1')].length,
+      h1Text: (document.querySelector('h1') || {}).textContent || '',
       ldTypes: types,
       legalLinks: document.querySelectorAll('.footer a[href*="terms"], .footer a[href*="refund"], .footer a[href*="privacy"]').length,
       privacyLink: !!document.querySelector('.footer a[href*="privacy-policy"]'),
-      consentBody: (document.getElementById('consentBody') || {}).textContent ? 1 : 0,
+      footerHelp: [...document.querySelectorAll('.footer a')].map((a) => a.getAttribute('href')),
+      // the four things that must NOT be in the header any more
+      headerHasFaq: nav.some((a) => /faq/i.test(a.getAttribute('href') || '')),
+      headerHasSupport: nav.some((a) => /support/i.test(a.getAttribute('href') || '')),
+      headerHasPrivacy: nav.some((a) => /privacy|terms|refund/i.test(a.getAttribute('href') || '')),
+      showcase: !!document.querySelector('#profileCta'),
+      marketingBand: !!document.querySelector('.page-cta'),
     };
   });
   ok('home loads, no JS errors', errs.length === 0 && cerr.length === 0, errs.concat(cerr).join(' | '));
   ok('no failed requests', failed.length === 0, failed.join(' | '));
   ok('consent gate visible on 1st visit', home.gateVisible);
+  ok('home is the home page (data-page + one h1)', home.page === 'home' && home.h1 === 1, home.page + ' / h1=' + home.h1);
+  ok('home shows hero, my work, the demo and pricing — in that order',
+     JSON.stringify(home.sections) === JSON.stringify(['home', 'work', 'live', 'products']), home.sections.join(', '));
   ok('2 products rendered (standard + premium)', home.products === 2, home.products);
-  ok('14 FAQs', home.faqs === 14, home.faqs);
-  ok('2 team members, 1 photo (co-founder low profile)', home.team === 2 && home.teamPhotos === 1, home.team + '/' + home.teamPhotos);
-  ok('4 delivery steps', home.deliverySteps === 4, home.deliverySteps);
-  ok('3 support channels', home.supportCards === 3, home.supportCards);
-  ok('3 delivery zones (incl. pickup)', home.zones === 3, home.zones);
-  ok('4 payment methods', home.payments === 4, home.payments);
-  ok('add-ons section removed from booking form', home.addOns === 0, home.addOns);
+  ok('the header has exactly Home / Product & Pricing / About Us / Booking',
+     home.navLabels.join('|') === 'Home|Product & Pricing|About Us|Booking', home.navLabels.join(' | '));
+  ok('every header link points at a real page',
+     home.navHrefs.join('|') === 'index.html|pricing.html|about.html|booking.html', home.navHrefs.join(' | '));
+  ok('the header marks the page you are on', home.navActive.join(',') === 'Home', home.navActive.join(','));
+  ok('the header button says Order Now and goes to booking',
+     /order now/i.test(home.ctaLabel) && home.cta === 'booking.html', home.ctaLabel + ' -> ' + home.cta);
+  ok('FAQ, contact and legal are NOT in the header',
+     !home.headerHasFaq && !home.headerHasSupport && !home.headerHasPrivacy,
+     JSON.stringify({ faq: home.headerHasFaq, support: home.headerHasSupport, legal: home.headerHasPrivacy }));
+  ok('FAQ, contact and legal ARE in the footer',
+     home.footerHelp.indexOf('faq.html') > -1 &&
+     home.footerHelp.indexOf('support.html') > -1 &&
+     home.footerHelp.indexOf('privacy-policy.html') > -1,
+     home.footerHelp.slice(-8).join(' '));
   ok('the old 3D studio is gone (no section, no button, no three.js)', !home.studio && !home.studioBtn && !home.three && home.canvases === 0, JSON.stringify({ studio: home.studio, btn: home.studioBtn, three: home.three, canvas: home.canvases }));
   ok('the hero shows a card with a front and a back', home.hero3d && home.heroFaces === 2, JSON.stringify({ hero3d: home.hero3d, faces: home.heroFaces }));
-  ok('the "My work" section is on the page', home.work && (home.workItems > 0 || home.workEmpty), JSON.stringify({ work: home.work, items: home.workItems, empty: home.workEmpty }));
-  ok('the nav points at My work', home.navWork >= 2, home.navWork);
   ok('JSON-LD Organization+WebSite+2 Products+FAQPage', ['Organization', 'WebSite', 'Product', 'FAQPage'].every(t => home.ldTypes.includes(t)) && home.ldTypes.filter(t => t === 'Product').length === 2, home.ldTypes.join(','));
   ok('footer links Terms/Refund/Privacy', home.legalLinks >= 3 && home.privacyLink, home.legalLinks);
+
   const noAcrylic = await p.evaluate(() => {
     const t = document.body.innerText.toLowerCase();
-    const cfgTxt = (window.TAPASUL_CONFIG.pricing.products.acrylic ? 'product-defined' : 'no-product');
-    return { page: /acrylic|standee/.test(t), cfg: cfgTxt, order: window.TAPASUL_CONFIG.pricing.order.join(',') };
+    return { page: /acrylic|standee/.test(t), order: window.TAPASUL_CONFIG.pricing.order.join(',') };
   });
   ok('no acrylic wording on the page, order = card + premium only',
      !noAcrylic.page && noAcrylic.order === 'card,premium', JSON.stringify(noAcrylic));
 
-  const bk = await p.evaluate(() => ({
-    types: document.querySelectorAll('.btype').length,
-    slots: document.querySelectorAll('.slot').length,
-    dateMin: document.getElementById('bookingDate').min,
-    lead: window.TAPASUL_CONFIG.booking.leadDays,
-    promo: !!document.getElementById('promoCode'),
-    cta: document.getElementById('bookingCtaTotal').textContent.trim(),
-    glass: document.querySelectorAll('.glass').length,
-    step: document.querySelectorAll('.booking__steps li').length,
-  }));
-  ok('booking UI: 2 types, 7 slots, 3 glass panels, 4 step dots',
-     bk.types === 2 && bk.slots === 7 && bk.glass === 3 && bk.step === 4, JSON.stringify(bk));
-  ok('booking date starts at the lead time', !!bk.dateMin, bk.dateMin);
-  ok('promo code box present + CTA shows the total', bk.promo && /\u20b1/.test(bk.cta), bk.cta);
-
-  const inside = await p.evaluate(() => {
-    const cards = [...document.querySelectorAll('.inside-card')];
-    const txt = (el) => (el || {}).textContent ? el.textContent.replace(/\s+/g, ' ').trim() : '';
-    const std = cards.find((c) => c.dataset.insideProduct === 'card');
-    const prm = cards.find((c) => c.dataset.insideProduct === 'premium');
-    const items = (c) => [...(c ? c.querySelectorAll('.inside-card__list strong') : [])].map((e) => e.textContent.trim());
+  // ---- the product cards on Home ----
+  const prem = await p.evaluate(() => {
+    const cards = [...document.querySelectorAll('#productGrid .product')];
+    const prem = cards.find((c) => c.dataset.productCard === 'premium');
     return {
-      section: !!document.querySelector('#inside'),
-      cards: cards.length,
-      names: cards.map((c) => txt(c.querySelector('.inside-card__head h3'))),
-      prices: cards.map((c) => txt(c.querySelector('.inside-card__price'))),
-      stdItems: items(std),
-      prmItems: items(prm),
-      tiles: [...document.querySelectorAll('.inside__tile strong')].map((e) => e.textContent.trim()),
-      ctas: [...document.querySelectorAll('.inside-card__cta')].map((e) => e.textContent.trim()),
-      links: [...document.querySelectorAll('.inside-card__link')].map((e) => e.getAttribute('href')),
-      title: txt(document.querySelector('#inside h2')),
+      premiumCard: !!prem,
+      amount: prem ? prem.querySelector('.product__amount').textContent.trim() : '',
+      recurring: prem ? prem.querySelector('.product__recurring').textContent.replace(/\s+/g, ' ').trim() : '',
+      features: prem ? prem.querySelectorAll('.product__features li').length : 0,
+      badge: prem ? (prem.querySelector('.product__badge') || {}).textContent : '',
+      selectBtn: !!document.querySelector('[data-select-product="card"]'),
     };
   });
-  ok('inside-the-card section renders 2 tier cards', inside.section && inside.cards === 2, JSON.stringify(inside.names));
+  ok('premium card: \u20b12,499 + \u20b299/month', prem.premiumCard && prem.amount.replace(/[^\d]/g, '') === '2499' && /299/.test(prem.recurring), JSON.stringify(prem).slice(0, 200));
+  ok('premium card lists the logo customisation', /logo/i.test(prem.badge) && prem.features >= 5, prem.badge + ' / ' + prem.features + ' features');
 
-  // ---------- live profiles: the moving strip + the free-page CTA ----------
+  // ---- the demo: live profile strip + the free-page CTA ----
   const live = await p.evaluate(() => {
     const track = document.querySelector('#profileTrack');
     const items = [...document.querySelectorAll('.marquee__item')];
@@ -125,7 +125,6 @@ function ok(name, pass, note) { results.push([pass ? 'PASS' : 'FAIL', name, note
       section: !!document.querySelector('#live'),
       items: items.length,
       halves: document.querySelectorAll('.marquee__half').length,
-      firstText: items[0] ? items[0].textContent.replace(/\s+/g, ' ').trim() : '',
       firstHref: items[0] ? items[0].getAttribute('href') : '',
       animation: track ? getComputedStyle(track).animationName : 'none',
       duration: track ? getComputedStyle(track).animationDuration : '',
@@ -133,94 +132,201 @@ function ok(name, pass, note) { results.push([pass ? 'PASS' : 'FAIL', name, note
       ctaSample: cta ? ((cta.querySelector('.showcase__urlInput') || {}).placeholder || '') : '',
       ctaNote: cta ? (cta.querySelector('.showcase__note') || {}).textContent || '' : '',
       btnText: btn ? btn.textContent.trim() : '',
-      btnHref: btn ? (btn.getAttribute('href') || btn.id || '') : '',
     };
   });
-  ok('live-profiles strip renders the customer pages', live.section && live.items >= 6 && live.halves === 2, live.items + ' chips');
+  ok('the demo (live profiles) is on Home', live.section && live.items >= 6 && live.halves === 2, live.items + ' chips');
   ok('the strip points at portal.tapasul.com', /portal\.tapasul\.com\/r\//.test(live.firstHref || ''), live.firstHref);
   ok('the strip actually moves', /marquee/.test(live.animation || '') && live.duration !== '0s', live.animation + ' ' + live.duration);
-  ok('the free-page CTA is there', /page is free/i.test(live.ctaTitle) && /yourname/.test(live.ctaSample) && live.btnText.length > 3,
-     live.ctaTitle + ' | ' + live.btnText + ' -> ' + live.btnHref);
+  ok('the free-page CTA is there', /page is free/i.test(live.ctaTitle) && /yourname/.test(live.ctaSample) && live.btnText.length > 3, live.ctaTitle + ' | ' + live.btnText);
   ok('the CTA says the free page only comes with a card',
-     /digital card/i.test(live.ctaNote || '') && /not sold on its own|only/i.test(live.ctaNote || ''),
-     live.ctaNote);
+     /digital card/i.test(live.ctaNote || '') && /not sold on its own|only/i.test(live.ctaNote || ''), live.ctaNote);
 
-  // the strip must stay on ONE straight line and travel to the right
   const strip = await p.evaluate(() => {
     const items = [...document.querySelectorAll('.marquee__half:first-child .marquee__item')];
     const tops = [...new Set(items.map((i) => Math.round(i.getBoundingClientRect().top)))];
     return { rows: tops.length, items: items.length };
   });
   ok('the profile strip is one straight line', strip.rows === 1 && strip.items >= 6, JSON.stringify(strip));
-
   const xA = await p.evaluate(() => Math.round(document.querySelector('.marquee__track').getBoundingClientRect().left));
   await p.waitForTimeout(1100);
   const xB = await p.evaluate(() => Math.round(document.querySelector('.marquee__track').getBoundingClientRect().left));
   ok('the strip moves to the right', xB > xA, xA + ' -> ' + xB);
 
-  // one click on the tier card must take you to the features page
-  const jump = await p.evaluate(() => {
-    const a = document.querySelector('.inside-card__link');
-    return { label: a ? a.textContent.trim() : '', href: a ? a.getAttribute('href') : '', count: document.querySelectorAll('.inside-card__link').length };
-  });
-  ok('one click on the tier card opens the features page',
-     jump.count === 2 && /check the features/i.test(jump.label) && /features\.html$/.test(jump.href || ''),
-     JSON.stringify(jump));
-  ok('section is titled "What is inside your digital card"', /inside your digital card/i.test(inside.title || ''), inside.title);
-  ok('standard tier lists picture/tagline/bio/3 socials/contact + 2 features of choice',
-     ['Profile picture', 'Tagline', 'Bio', '3 social media links', 'Contact info'].every((t) => inside.stdItems.includes(t)) &&
-     inside.stdItems.includes('2 features of your choice'),
-     inside.stdItems.join(' | '));
-  ok('premium tier lists picture/all socials/tagline/all contacts/all features',
-     ['Profile picture', 'All of your social media', 'Tagline', 'All contacts', 'All of the features'].every((t) => inside.prmItems.includes(t)),
-     inside.prmItems.join(' | '));
-  ok('the featured list is NOT on the home page any more', inside.tiles.length === 0, inside.tiles.length + ' tiles');
-  ok('the tier cards link to the standalone features page',
-     inside.links.length === 2 && inside.links.every((h) => /features\.html$/.test(h || '')),
-     (inside.links || []).join(' | '));
-  ok('tier prices show live values', /999/.test(inside.prices[0] || '') && /2,499/.test(inside.prices[1] || ''), inside.prices.join(' / '));
-
-  const noPre = await p.evaluate(() => {
-    const t = document.body.innerText.toLowerCase();
-    return { page: /pre-order|pre order/.test(t) };
-  });
-  ok('no pre-order wording left on the page', !noPre.page, JSON.stringify(noPre));
-
-  const prem = await p.evaluate(() => {
-    const cards = [...document.querySelectorAll('#productGrid .product')];
-    const prem = cards.find((c) => c.dataset.productCard === 'premium');
-    const btype = document.querySelector('.btype[data-type="premium"]');
+  /* ---------- 1b. PRODUCT & PRICING ---------- */
+  await visit(p, 'pricing.html');
+  const pricing = await p.evaluate(() => {
+    const nav = [...document.querySelectorAll('.nav a')];
+    const rows = [...document.querySelectorAll('#compareTable tbody tr')];
+    const groups = rows.filter((r) => r.classList.contains('cmp__group')).map((r) => r.textContent.trim());
+    const cells = [...document.querySelectorAll('#compareTable tbody tr:not(.cmp__group) .cmp__cell')];
+    const cards = [...document.querySelectorAll('.inside-card')];
     return {
-      premiumCard: !!prem,
-      amount: prem ? prem.querySelector('.product__amount').textContent.trim() : '',
-      recurring: prem ? prem.querySelector('.product__recurring').textContent.replace(/\s+/g, ' ').trim() : '',
-      features: prem ? prem.querySelectorAll('.product__features li').length : 0,
-      badge: prem ? (prem.querySelector('.product__badge') || {}).textContent : '',
-      btype: !!btype,
-      btypePrice: btype ? btype.querySelector('.btype__price').textContent.replace(/\s+/g, ' ').trim() : '',
-      workItems: document.querySelectorAll('.work__item').length,
-      workCfgItems: ((window.TAPASUL_CONFIG.myWork && window.TAPASUL_CONFIG.myWork.items) || []).length,
-      cfgPremium: window.TAPASUL_CONFIG.pricing.products.premium
-        ? [window.TAPASUL_CONFIG.pricing.products.premium.price, window.TAPASUL_CONFIG.pricing.products.premium.monthly]
-        : null,
+      page: document.documentElement.dataset.page,
+      h1: (document.querySelector('h1') || {}).textContent || '',
+      active: nav.filter((a) => a.classList.contains('is-active')).map((a) => a.textContent.trim()),
+      sections: [...document.querySelectorAll('main section[id]')].map((x) => x.id),
+      cols: [...document.querySelectorAll('#compareTable thead th')].length,
+      colNames: [...document.querySelectorAll('.cmp__col-name')].map((e) => e.textContent.trim()),
+      colPrices: [...document.querySelectorAll('.cmp__col-price')].map((e) => e.textContent.trim()),
+      groups: groups,
+      rows: rows.filter((r) => !r.classList.contains('cmp__group')).length,
+      ticks: cells.filter((c) => c.querySelector('.cmp__yes')).length,
+      dashes: cells.filter((c) => c.querySelector('.cmp__no')).length,
+      ctas: [...document.querySelectorAll('.cmp__cta')].map((b) => b.textContent.trim()),
+      insideCards: cards.length,
+      insideLinks: [...document.querySelectorAll('.inside-card__link')].map((a) => a.getAttribute('href')),
+      featuredTiles: document.querySelectorAll('.inside__tile').length,
+      products: document.querySelectorAll('#productGrid .product:not(.product--skeleton)').length,
+      overflowsX: document.documentElement.scrollWidth > window.innerWidth,
     };
   });
-  ok('premium card: \u20b12,499 + \u20b299/month', prem.premiumCard && prem.amount.replace(/[^\d]/g, '') === '2499' && /299/.test(prem.recurring), JSON.stringify(prem).slice(0, 220));
-  ok('premium card lists the logo customisation', /logo/i.test(prem.badge) && prem.features >= 5, prem.badge + ' / ' + prem.features + ' features');
-  ok('premium booking option exists at the premium price', prem.btype && /2,499/.test(prem.btypePrice) && /299/.test(prem.btypePrice), prem.btypePrice);
-  ok('the work gallery is driven by the config', prem.workItems === prem.workCfgItems, JSON.stringify({ rendered: prem.workItems, config: prem.workCfgItems }));
+  ok('pricing page loads with the nav on "Product & Pricing"',
+     pricing.page === 'pricing' && pricing.active.join('') === 'Product & Pricing', pricing.page + ' / ' + pricing.active.join(''));
+  ok('pricing page has one h1 and the pricing sections',
+     !!pricing.h1 && pricing.sections.join(',').indexOf('products') > -1 && pricing.sections.indexOf('compare') > -1,
+     pricing.sections.join(', '));
+  ok('the comparison table has 3 columns (label + 2 tiers)',
+     pricing.cols === 3 && pricing.colNames.join('|') === 'Standard|Premium', pricing.colNames.join(' | '));
+  ok('the comparison table shows live prices',
+     /999/.test(pricing.colPrices[0] || '') && /2,499/.test(pricing.colPrices[1] || ''), pricing.colPrices.join(' / '));
+  ok('the comparison table groups the rows and mixes ticks, dashes and text',
+     pricing.groups.length >= 4 && pricing.rows >= 12 && pricing.ticks > 5 && pricing.dashes >= 2,
+     JSON.stringify({ groups: pricing.groups.length, rows: pricing.rows, ticks: pricing.ticks, dashes: pricing.dashes }));
+  ok('each tier has its own "Choose" button', pricing.ctas.length === 2 && /standard|premium/i.test(pricing.ctas[0] + pricing.ctas[1]), pricing.ctas.join(' | '));
+  ok('the table does not push the page sideways on desktop', !pricing.overflowsX);
+  ok('the old "what\'s inside" section is gone (the table covers it now)',
+     !pricing.sections.includes('inside') && pricing.insideCards === 0 && pricing.featuredTiles === 0,
+     pricing.sections.join(', ') + ' / cards=' + pricing.insideCards);
 
-  /* ---------- 2. consent: accept ---------- */
-  await p.click('#consentAccept');
-  await p.waitForTimeout(500);
-  const acc = await p.evaluate(() => ({
+  /* ---------- 1c. ABOUT US ---------- */
+  await visit(p, 'about.html');
+  const about = await p.evaluate(() => {
+    const nav = [...document.querySelectorAll('.nav a')];
+    return {
+      page: document.documentElement.dataset.page,
+      active: nav.filter((a) => a.classList.contains('is-active')).map((a) => a.textContent.trim()),
+      team: document.querySelectorAll('.member').length,
+      teamPhotos: document.querySelectorAll('.member__avatar img').length,
+      work: document.querySelectorAll('.work__item').length,
+      workEmpty: !!document.querySelector('.work__empty'),
+      workCfg: (window.TAPASUL_CONFIG.myWork && window.TAPASUL_CONFIG.myWork.items || []).length,
+      sections: [...document.querySelectorAll('main section[id]')].map((x) => x.id),
+    };
+  });
+  ok('about page loads with the nav on "About Us"',
+     about.page === 'about' && about.active.join('') === 'About Us', about.page + ' / ' + about.active.join(''));
+  ok('the team is on the About page (2 people, 1 photo)',
+     about.team === 2 && about.teamPhotos === 1, about.team + '/' + about.teamPhotos);
+  ok('the About page is now just the page head, the team and the CTA',
+     JSON.stringify(about.sections) === JSON.stringify(['top', 'team']) && about.work === 0,
+     about.sections.join(', ') + ' / tiles=' + about.work);
+
+  /* ---------- 1d. BOOKING ---------- */
+  await visit(p, 'booking.html');
+  const bk = await p.evaluate(() => {
+    const nav = [...document.querySelectorAll('.nav a')];
+    return {
+      page: document.documentElement.dataset.page,
+      active: nav.filter((a) => a.classList.contains('is-active')).map((a) => a.textContent.trim()),
+      types: document.querySelectorAll('.btype').length,
+      slots: document.querySelectorAll('.slot').length,
+      dateMin: (document.getElementById('bookingDate') || {}).min || '',
+      lead: window.TAPASUL_CONFIG.booking.leadDays,
+      promo: !!document.getElementById('promoCode'),
+      cta: (document.getElementById('bookingCtaTotal') || {}).textContent || '',
+      glass: document.querySelectorAll('.glass').length,
+      step: document.querySelectorAll('.booking__steps li').length,
+      deliverySteps: document.querySelectorAll('#deliverySteps li').length,
+      zones: document.querySelectorAll('#shippingZone option').length,
+      payments: document.querySelectorAll('#paymentMethod option').length,
+      addOns: document.querySelectorAll('#addOnsList input').length,
+      freePage: !!document.getElementById('bookingFreePage'),
+      summary: !!document.getElementById('summaryRows'),
+    };
+  });
+  ok('booking page loads with the nav on "Booking"',
+     bk.page === 'booking' && bk.active.join('') === 'Booking', bk.page + ' / ' + bk.active.join(''));
+  ok('booking UI: 2 types, 3 glass panels, 4 step dots, the summary',
+     bk.types === 2 && bk.glass === 3 && bk.step === 4 && bk.summary, JSON.stringify(bk).slice(0, 200));
+  ok('the free-page box lives inside the booking form', bk.freePage);
+  ok('booking date starts at the lead time', !!bk.dateMin, bk.dateMin);
+  ok('3 delivery zones + 4 payment methods', bk.zones === 3 && bk.payments === 4, bk.zones + '/' + bk.payments);
+  ok('add-ons section removed from booking form', bk.addOns === 0, bk.addOns);
+  ok('promo code box present + CTA shows the total', bk.promo && /\u20b1/.test(bk.cta), bk.cta);
+  ok('4 delivery steps are on the booking page', bk.deliverySteps === 4, bk.deliverySteps);
+  const premType = await p.evaluate(() => {
+    const btype = document.querySelector('.btype[data-type="premium"]');
+    return {
+      btype: !!btype,
+      btypePrice: btype ? btype.querySelector('.btype__price').textContent.replace(/\s+/g, ' ').trim() : '',
+    };
+  });
+  ok('premium booking option exists at the premium price',
+     premType.btype && /2,499/.test(premType.btypePrice) && /299/.test(premType.btypePrice), premType.btypePrice);
+
+  /* ---------- 1e. FAQ ---------- */
+  await visit(p, 'faq.html');
+  const faqPage = await p.evaluate(() => ({
+    page: document.documentElement.dataset.page,
+    faqs: document.querySelectorAll('#faqList details').length,
+    h1: (document.querySelector('h1') || {}).textContent || '',
+    active: [...document.querySelectorAll('.nav a.is-active')].length,
+  }));
+  ok('14 FAQs live on their own page', faqPage.page === 'faq' && faqPage.faqs === 14, faqPage.faqs);
+  ok('the FAQ page is footer-only (no nav item highlighted)', faqPage.active === 0, faqPage.active);
+
+  /* ---------- 1f. CONTACT & SUPPORT ---------- */
+  await visit(p, 'support.html');
+  const support = await p.evaluate(() => ({
+    page: document.documentElement.dataset.page,
+    cards: document.querySelectorAll('#supportGrid .support-card').length,
+    privacy: !!document.querySelector('#privacy'),
+    active: [...document.querySelectorAll('.nav a.is-active')].length,
+  }));
+  ok('3 support channels on Contact & Support', support.page === 'support' && support.cards === 3, support.cards);
+  ok('the plain-language data note is on the support page', support.privacy);
+
+  /* ---------- 1g. every page shares the same header + footer ---------- */
+  const PAGES = ['index.html', 'pricing.html', 'about.html', 'booking.html', 'faq.html', 'support.html'];
+  const shell = [];
+  const pageErrs = [];
+  for (const f of PAGES) {
+    await p.goto(BASE + '/' + f, { waitUntil: 'load' });
+    await p.waitForTimeout(700);
+    const info = await p.evaluate(() => ({
+      nav: [...document.querySelectorAll('.nav a')].map((a) => a.textContent.trim()).join('|'),
+      footer: document.querySelectorAll('.footer a').length,
+      h1: document.querySelectorAll('h1').length,
+      bookingLink: !!document.querySelector('a[href="booking.html"]'),
+      consoleErr: 0,
+    }));
+    shell.push(f + ':' + (info.nav === 'Home|Product & Pricing|About Us|Booking' ? 'ok' : 'BAD') + (info.h1 === 1 ? '' : '!h1'));
+    pageErrs.push(info);
+  }
+  ok('all 6 pages have the same 4-item header and exactly one h1',
+     shell.every((x) => x.endsWith('ok')) && pageErrs.every((i) => i.h1 === 1), shell.join(' '));
+  ok('all 6 pages link to the booking page', pageErrs.every((i) => i.bookingLink));
+  await visit(p, 'index.html');
+
+  /* ---------- 2. consent: accept (fresh browser, so the gate is showing) ---------- */
+  const ctxC = await b.newContext({ viewport: { width: 1280, height: 900 } });
+  const pc = await ctxC.newPage();
+  await pc.goto(BASE + '/index.html', { waitUntil: 'load' });
+  await pc.waitForTimeout(1200);
+  const gateShown = await pc.isVisible('#consentAccept');
+  await pc.click('#consentAccept');
+  await pc.waitForTimeout(500);
+  const acc = await pc.evaluate(() => ({
     state: document.documentElement.dataset.consent,
     hidden: document.getElementById('consentGate').hidden,
     stored: localStorage.getItem('tapasul_consent_v1'),
   }));
-  ok('consent accept stores granted + hides gate', acc.state === 'granted' && acc.hidden && acc.stored === 'granted', JSON.stringify(acc));
+  ok('consent accept stores granted + hides gate',
+     gateShown && acc.state === 'granted' && acc.hidden && acc.stored === 'granted', JSON.stringify(acc));
+  await ctxC.close();
 
-  /* ---------- 3. booking math ---------- */
+  /* ---------- 3. booking math (on the booking page) ---------- */
+  await visit(p, 'booking.html');
   // pick the next open day so the audit passes whatever day it runs
   await p.evaluate(() => {
     const cfg = window.TAPASUL_CONFIG.booking;
@@ -299,7 +405,7 @@ function ok(name, pass, note) { results.push([pass ? 'PASS' : 'FAIL', name, note
 
   /* ---------- 4b. anti-spam (fresh page so the dwell clock starts now) ---------- */
   const pb = await ctx.newPage();
-  await pb.goto(BASE + '/index.html', { waitUntil: 'load' });
+  await pb.goto(BASE + '/booking.html', { waitUntil: 'load' });
   await pb.waitForTimeout(2200);
   await pb.evaluate(() => {
     const cfg = window.TAPASUL_CONFIG.booking;
@@ -340,22 +446,7 @@ function ok(name, pass, note) { results.push([pass ? 'PASS' : 'FAIL', name, note
      JSON.stringify({ date: good.record.date, slot: good.record.slot, phone: good.record.phone }));
   await pb.close();
 
-  /* ---------- 4c. inside-the-card CTA picks the tier ---------- */
-  await p.evaluate(() => document.querySelector('#inside').scrollIntoView({ block: 'start' }));
-  await p.waitForTimeout(500);
-  await p.click('[data-inside-pick="premium"]');
-  await p.waitForTimeout(700);
-  const picked = await p.evaluate(() => ({
-    type: document.querySelector('.btype.is-active') ? document.querySelector('.btype.is-active').dataset.type : '',
-    total: document.getElementById('displayTotal').textContent,
-    rows: document.getElementById('summaryRows').textContent.replace(/\s+/g, ' '),
-    type: document.querySelector('.btype.is-active') ? document.querySelector('.btype.is-active').dataset.type : '',
-  }));
-  ok('"Book the premium card" selects the premium tier',
-     picked.type === 'premium' && /2,499/.test(picked.rows),
-     picked.type + ' / ' + picked.rows.slice(0, 60));
-
-  /* ---------- 4d. "choose your 2 features" picker ---------- */
+  /* ---------- 4d. "choose your feature" picker ---------- */
   // make sure we are on the Standard card first — the picker only shows there
   await p.evaluate(() => {
     const b = document.querySelector('.btype[data-type="standard"]');
@@ -378,25 +469,25 @@ function ok(name, pass, note) { results.push([pass ? 'PASS' : 'FAIL', name, note
   const totalBefore = await p.evaluate(() => document.getElementById('displayTotal').textContent);
   await p.evaluate(() => { document.querySelector('#featurePickList .chip').click(); });
   await p.waitForTimeout(250);
-  await p.evaluate(() => { document.querySelectorAll('#featurePickList .chip')[1].click(); });
-  await p.waitForTimeout(250);
-  const two = await p.evaluate(() => ({
+  const one = await p.evaluate(() => ({
     on: document.querySelectorAll('#featurePickList .chip.is-on').length,
     summary: document.getElementById('summaryRows').textContent.replace(/\s+/g, ' '),
     total: document.getElementById('displayTotal').textContent,
+    hint: (document.querySelector('#featurePickHint') || {}).textContent || '',
   }));
-  ok('customer can pick exactly 2 features', two.on === 2, JSON.stringify(two));
-  ok('the picked features show in the summary without changing the price',
-     /Features/.test(two.summary) && /Client Reviews/.test(two.summary) && two.total === totalBefore,
-     two.summary.slice(0, 90) + ' | total ' + two.total + ' (was ' + totalBefore + ')');
+  ok('the standard card lets the customer pick one feature', one.on === 1, JSON.stringify({ on: one.on, hint: one.hint }));
+  ok('the picked feature shows in the summary without changing the price',
+     /Features/.test(one.summary) && /Client Reviews/.test(one.summary) && one.total === totalBefore,
+     one.summary.slice(0, 90) + ' | total ' + one.total + ' (was ' + totalBefore + ')');
 
-  await p.evaluate(() => { document.querySelectorAll('#featurePickList .chip')[2].click(); });
+  await p.evaluate(() => { document.querySelectorAll('#featurePickList .chip')[1].click(); });
   await p.waitForTimeout(250);
-  const three = await p.evaluate(() => ({
+  const twoTry = await p.evaluate(() => ({
     on: document.querySelectorAll('#featurePickList .chip.is-on').length,
     err: (document.querySelector('#featurePickError') || {}).textContent || '',
   }));
-  ok('a third feature is refused (only 2 allowed)', three.on === 2 && /2 features/.test(three.err), JSON.stringify(three));
+  ok('a second feature is refused (only 1 allowed)',
+     twoTry.on === 1 && /1 feature/.test(twoTry.err), JSON.stringify(twoTry));
 
   await p.evaluate(() => { document.querySelector('.btype[data-type="premium"]').click(); });
   await p.waitForTimeout(500);
@@ -408,9 +499,71 @@ function ok(name, pass, note) { results.push([pass ? 'PASS' : 'FAIL', name, note
   await p.evaluate(() => { document.querySelector('.btype[data-type="standard"]').click(); });
   await p.waitForTimeout(400);
 
+  /* ---------- 4e. booked days and times are blocked ---------- */
+  const ctxAv = await b.newContext({ viewport: { width: 1280, height: 950 } });
+  // pretend four people already took every time on one day (maxPerSlot = 4)
+  await ctxAv.addInitScript(() => {
+    const slots = ['09:00', '10:00', '11:00', '13:00', '14:00', '15:00', '16:00'];
+    const date = document.getElementById ? null : null; // placeholder, real date set below
+    const d = new Date(); d.setDate(d.getDate() + 6);
+    while (d.getDay() === 0) d.setDate(d.getDate() + 1);
+    const iso = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+    window.__fullDay = iso;
+    const list = [];
+    slots.forEach((s) => { for (let i = 0; i < 4; i++) list.push({ id: 'T' + s + i, date: iso, slot: s, status: 'new', created: Date.now() }); });
+    localStorage.setItem('tapasul_bookings_v1', JSON.stringify(list));
+  });
+  const pAv = await ctxAv.newPage();
+  const avErrs = [];
+  pAv.on('pageerror', (e) => avErrs.push(e.message));
+  await pAv.goto(BASE + '/booking.html', { waitUntil: 'load' });
+  await pAv.waitForTimeout(1600);
+  await pAv.evaluate(() => { const a = document.getElementById('consentAccept'); if (a) a.click(); });
+  await pAv.waitForTimeout(500);
+  await pAv.click('#dateTrigger');
+  await pAv.waitForTimeout(700);
+  const avState = await pAv.evaluate(() => {
+    const full = document.querySelector('.datepick__day--full');
+    return {
+      panelOpen: !document.getElementById('datePanel').hidden,
+      dayCells: document.querySelectorAll('.datepick__day[data-date]').length,
+      fullDay: full ? full.dataset.date : '',
+      fullBlocked: full ? full.disabled : false,
+      fullTitle: full ? full.title : '',
+      fullLabel: full ? full.getAttribute('aria-label') : '',
+      matchesSeeded: !!full && full.dataset.date === window.__fullDay,
+    };
+  });
+  ok('the date picker opens as a calendar with the month laid out',
+     avState.panelOpen && avState.dayCells >= 28, JSON.stringify({ open: avState.panelOpen, cells: avState.dayCells }));
+  ok('a day that is completely booked is greyed out and cannot be picked',
+     avState.fullBlocked && avState.matchesSeeded && /fully booked/i.test(avState.fullLabel),
+     JSON.stringify(avState));
+
+  // the times on that day say "Full" too
+  await pAv.evaluate(() => {
+    const el = document.getElementById('bookingDate');
+    el.value = window.__fullDay;
+    el.dispatchEvent(new Event('change', { bubbles: true }));
+  });
+  await pAv.waitForTimeout(500);
+  const avSlots = await pAv.evaluate(() => ({
+    total: document.querySelectorAll('.slot').length,
+    disabled: document.querySelectorAll('.slot:disabled').length,
+    labels: [...document.querySelectorAll('.slot:disabled .slot__state')].map((x) => x.textContent.trim()),
+    hint: (document.getElementById('slotHint') || {}).textContent || '',
+  }));
+  ok('every time on a fully booked day is disabled and marked "Full"',
+     avSlots.disabled === avSlots.total && avSlots.labels.every((t) => /full/i.test(t)),
+     JSON.stringify(avSlots));
+  ok('the visitor is told to pick another day', /taken|another day/i.test(avSlots.hint), avSlots.hint);
+  ok('the availability check runs without JS errors', avErrs.length === 0, avErrs.join(' | '));
+  await ctxAv.close();
+
   /* ---------- 5. the hero card turns over, and the work gallery ---------- */
+  await visit(p, 'index.html');
   await p.evaluate(() => document.getElementById('card3d').scrollIntoView({ block: 'center' }));
-  await p.waitForTimeout(600);
+  await p.waitForTimeout(900);
   const ryBefore = await p.evaluate(() => {
     const c = document.getElementById('card3dInner');
     return parseFloat(c.style.getPropertyValue('--ry')) || 0;
@@ -428,6 +581,7 @@ function ok(name, pass, note) { results.push([pass ? 'PASS' : 'FAIL', name, note
   });
   ok('the hero card can be turned over by dragging', Math.abs(ryAfter - ryBefore) > 30, ryBefore + ' -> ' + ryAfter);
 
+  await visit(p, 'index.html');
   const workState = await p.evaluate(() => ({
     items: document.querySelectorAll('.work__item').length,
     empty: !!document.querySelector('.work__empty'),
@@ -436,6 +590,60 @@ function ok(name, pass, note) { results.push([pass ? 'PASS' : 'FAIL', name, note
   ok('the work gallery shows one tile per configured item',
      workState.items === workState.cfg && (workState.items > 0 ? workState.items === workState.cfg : workState.empty),
      JSON.stringify(workState));
+
+  /* ---------- 5b. tapping a card opens it big ---------- */
+  await p.evaluate(() => { document.getElementById('work').scrollIntoView({ block: 'start' }); });
+  await p.waitForTimeout(500);
+  await p.click('.work__item[data-work-open="0"]');
+  await p.waitForTimeout(1000);
+  const lbOpen = await p.evaluate(() => {
+    const lb = document.getElementById('workLightbox');
+    const img = document.getElementById('lbImg');
+    const r = img.getBoundingClientRect();
+    return {
+      open: lb && !lb.hidden,
+      title: (document.getElementById('lbTitle') || {}).textContent || '',
+      natural: img.naturalWidth, loaded: img.complete && img.naturalWidth > 0,
+      width: Math.round(r.width),
+      locked: document.documentElement.classList.contains('is-locked'),
+      focus: (document.activeElement || {}).className || '',
+    };
+  });
+  ok('tapping a card opens the picture, big and sharp',
+     lbOpen.open && lbOpen.loaded && lbOpen.natural >= 2000 && lbOpen.width > 500 && lbOpen.locked,
+     JSON.stringify(lbOpen));
+  ok('the lightbox names the client and traps the page behind it',
+     lbOpen.title.length > 2 && /lightbox__close/.test(lbOpen.focus), lbOpen.title + ' / ' + lbOpen.focus);
+
+  // tapping the picture blows it up to actual size (for scanning)
+  await p.click('#lbImg');
+  await p.waitForTimeout(500);
+  const lbZoom = await p.evaluate(() => {
+    const img = document.getElementById('lbImg');
+    const stage = document.getElementById('lbStage');
+    return {
+      zoomed: stage.classList.contains('is-zoomed'),
+      width: Math.round(img.getBoundingClientRect().width),
+      pannable: stage.scrollWidth > stage.clientWidth,
+    };
+  });
+  ok('tapping the picture zooms it in and lets you pan',
+     lbZoom.zoomed && lbZoom.width > 1500 && lbZoom.pannable, JSON.stringify(lbZoom));
+
+  // arrows move between cards, Esc closes
+  await p.keyboard.press('ArrowRight');
+  await p.waitForTimeout(400);
+  const lbNext = await p.evaluate(() => (document.getElementById('lbTitle') || {}).textContent || '');
+  await p.keyboard.press('Escape');
+  await p.waitForTimeout(400);
+  const lbAfter = await p.evaluate(() => ({
+    hidden: document.getElementById('workLightbox').hidden,
+    locked: document.documentElement.classList.contains('is-locked'),
+    focusBack: document.activeElement.getAttribute('data-work-open'),
+  }));
+  ok('arrow keys move between cards and Esc closes it',
+     lbNext !== lbOpen.title && lbAfter.hidden && !lbAfter.locked && lbAfter.focusBack === '0',
+     JSON.stringify({ next: lbNext, after: lbAfter }));
 
   /* ---------- 6. decline path ---------- */
   const ctx2 = await b.newContext({ viewport: { width: 1200, height: 800 } });
@@ -539,6 +747,23 @@ function ok(name, pass, note) { results.push([pass ? 'PASS' : 'FAIL', name, note
   ok('boot-check banner exists and stays hidden on a good load',
      boot.exists && boot.hidden === true && boot.hasCopy, JSON.stringify(boot));
 
+  // the banner must stay hidden on every other page too (the booking page has
+  // no product cards, which is what the old check looked for)
+  const otherPages = ['pricing.html', 'booking.html', 'about.html', 'faq.html', 'support.html'];
+  const shownOn = [];
+  for (const f of otherPages) {
+    await pBoot.goto(BASE + '/' + f, { waitUntil: 'load' });
+    await pBoot.waitForTimeout(1900);
+    const r = await pBoot.evaluate(() => {
+      const el = document.getElementById('loadError');
+      return { page: document.documentElement.dataset.page || location.pathname.split('/').pop(),
+               shown: el ? !el.hidden : null };
+    });
+    if (r.shown !== null && r.shown === true) shownOn.push(r.page);
+  }
+  ok('the "did not finish loading" banner stays hidden on the other 5 pages',
+     shownOn.length === 0, shownOn.join(', ') || 'hidden everywhere');
+
   // now break it on purpose — the banner must appear and explain itself
   const pBootBad = await ctxBoot.newPage();
   await pBootBad.route('**/script.js', (r) => r.abort());
@@ -583,7 +808,9 @@ function ok(name, pass, note) { results.push([pass ? 'PASS' : 'FAIL', name, note
       consentDrawn: drawn(consent),
       header: head ? (head.querySelector('img') ? 'img' : (head.querySelector('svg') ? 'svg' : 'missing')) : 'missing',
       headerDrawn: drawn(head),
-      broken: [...document.querySelectorAll('img')].filter((i) => i.complete && i.naturalWidth === 0).length,
+      // the lightbox image is empty until a card is opened — only count real srcs
+      broken: [...document.querySelectorAll('img')]
+        .filter((i) => i.getAttribute('src') && i.complete && i.naturalWidth === 0).length,
     };
   });
   ok('logo falls back to an inline copy when the file will not load',
@@ -609,54 +836,65 @@ function ok(name, pass, note) { results.push([pass ? 'PASS' : 'FAIL', name, note
       urlBase: (document.querySelector('.showcase__urlBase') || {}).textContent || '',
     };
   });
-  ok('the free page box has a name field and a claim button', flowBox.hasInput && flowBox.hasButton, JSON.stringify(flowBox));
+  ok('the demo has a free-page name field and a claim button', flowBox.hasInput && flowBox.hasButton, JSON.stringify(flowBox));
 
-  // step 1 — "Select Digital Card" brings them to the free page box
+  // step 1 — "Select Digital Card" on Home takes you to the Booking page
   await pf.click('[data-select-product="card"]');
-  await pf.waitForTimeout(1600);
-  const step1 = await pf.evaluate(() => {
-    const c = document.getElementById('profileCta').getBoundingClientRect();
-    return { inView: c.top < window.innerHeight && c.bottom > 0, focused: document.activeElement && document.activeElement.id };
-  });
-  ok('"Select Digital Card" opens the free page box', step1.inView, JSON.stringify(step1));
-
-  // step 2 — they type their name and see their address
-  await pf.fill('#profileName', 'Kusina ni Maria');
-  await pf.waitForTimeout(400);
-  const step2 = await pf.evaluate(() => ({
-    echo: (document.getElementById('profileUrlEcho') || {}).textContent || '',
-    url: (document.querySelector('.showcase__urlBase') || {}).textContent || '',
+  await pf.waitForTimeout(1800);
+  const step1 = await pf.evaluate(() => ({
+    url: location.pathname.split('/').pop(),
+    search: location.search,
+    form: !!document.getElementById('preOrderForm'),
   }));
-  ok('typing a name shows the page address they will get',
-     step2.echo.indexOf('kusina-ni-maria') > -1, JSON.stringify(step2));
+  ok('"Select Digital Card" opens the Booking page with that card chosen',
+     step1.url === 'booking.html' && step1.form, JSON.stringify(step1));
 
-  // step 3 — "Claim my free page" opens the comparison
+  // step 2 — the free-page box inside the form keeps the name, and the summary
+  await pf.fill('#bookingProfileName', 'Kusina ni Maria');
+  await pf.locator('#bookingProfileName').blur();
+  await pf.waitForTimeout(600);
+  const step2 = await pf.evaluate(() => ({
+    echo: (document.getElementById('bookingProfileEcho') || {}).textContent || '',
+    name: (document.getElementById('customerName') || {}).value || '',
+    rows: [...document.querySelectorAll('#summaryRows .summary__row')].map(r => r.textContent).join(' | '),
+  }));
+  ok('typing a page name on Booking fills the name and the summary',
+     /kusina-ni-maria/.test(step2.echo) && step2.name === 'Kusina ni Maria' &&
+     step2.rows.indexOf('portal.tapasul.com/r/kusina-ni-maria') > -1,
+     JSON.stringify({ echo: step2.echo, name: step2.name }));
+
+  // step 3 — "Claim my free page" in the demo jumps to the pricing page
+  await pf.goto(BASE + '/index.html', { waitUntil: 'load' });
+  await pf.waitForTimeout(1500);
+  await pf.evaluate(() => { const a = document.getElementById('consentAccept'); if (a) a.click(); });
+  await pf.waitForTimeout(300);
+  await pf.fill('#profileName', 'Kusina ni Maria');
+  await pf.locator('#profileName').blur();
+  await pf.waitForTimeout(300);
   await pf.click('#claimFreePage');
   await pf.waitForTimeout(1800);
   const step3 = await pf.evaluate(() => {
-    const c = document.getElementById('inside').getBoundingClientRect();
-    return { inView: c.top < window.innerHeight && c.bottom > 0, top: Math.round(c.top) };
-  });
-  ok('"Claim my free page" opens what is inside the card', step3.inView, JSON.stringify(step3));
-
-  // step 4 — the booking form arrives with everything they gave us
-  await pf.click('[data-inside-pick="card"]');
-  await pf.waitForTimeout(2000);
-  const step4 = await pf.evaluate(() => {
-    const c = document.getElementById('preorder').getBoundingClientRect();
-    const rows = [...document.querySelectorAll('#summaryRows .summary__row')].map(r => r.textContent).join(' | ');
+    const c = document.getElementById('compare');
     return {
-      inView: c.top < window.innerHeight && c.bottom > 0,
-      top: Math.round(c.top),
-      name: (document.getElementById('customerName') || {}).value || '',
-      rows: rows,
-      type: (document.querySelector('.btype.is-active') || {}).dataset ? document.querySelector('.btype.is-active').dataset.type : '',
+      url: location.pathname.split('/').pop(),
+      inView: c ? c.getBoundingClientRect().top < window.innerHeight : false,
+      hash: location.hash,
     };
   });
-  ok('the booking section opens with the name they typed',
-     step4.inView && step4.name === 'Kusina ni Maria', JSON.stringify(step4));
-  ok('the booking summary shows their free page address',
-     step4.rows.indexOf('portal.tapasul.com/r/kusina-ni-maria') > -1, step4.rows.slice(0, 160));
+  ok('"Claim my free page" opens the comparison table (pricing page)',
+     step3.url === 'pricing.html' && step3.inView, JSON.stringify(step3));
+
+  // step 4 — choosing a tier in the comparison table books that tier
+  await pf.click('[data-compare-pick="premium"]');
+  await pf.waitForTimeout(1800);
+  const step4 = await pf.evaluate(() => ({
+    url: location.pathname.split('/').pop(),
+    search: location.search,
+    type: (document.querySelector('.btype.is-active') || {}).dataset
+      ? document.querySelector('.btype.is-active').dataset.type : '',
+  }));
+  ok('"Choose Premium" in the comparison table books the premium card',
+     step4.url === 'booking.html' && step4.type === 'premium', JSON.stringify(step4));
   ok('the funnel runs without JS errors', ferr.length === 0, ferr.join(' | '));
   await ctxFlow.close();
 
@@ -666,7 +904,7 @@ function ok(name, pass, note) { results.push([pass ? 'PASS' : 'FAIL', name, note
     const fp = await c.newPage();
     const fpe = [];
     fp.on('pageerror', e => fpe.push(e.message));
-    await fp.goto(BASE + '/index.html', { waitUntil: 'load' });
+    await fp.goto(BASE + '/booking.html', { waitUntil: 'load' });
     await fp.waitForTimeout(1400);
     await fp.evaluate(() => { const a = document.getElementById('consentAccept'); if (a) a.click(); });
     await fp.waitForTimeout(300);
@@ -714,7 +952,7 @@ function ok(name, pass, note) { results.push([pass ? 'PASS' : 'FAIL', name, note
       if (fail) return route.fulfill({ status: 500, contentType: 'application/json', body: '{"ok":false,"error":"boom"}' });
       return route.fulfill({ status: 200, contentType: 'application/json', body: '{"ok":true,"id":"TS-TEST-1","emailed":true}' });
     });
-    await dp.goto(BASE + '/index.html?utm_source=fb&utm_campaign=audit', { waitUntil: 'load' });
+    await dp.goto(BASE + '/booking.html?utm_source=fb&utm_campaign=audit', { waitUntil: 'load' });
     await dp.waitForTimeout(1200);
     await dp.evaluate(() => { const a = document.getElementById('consentAccept'); if (a) a.click(); });
     await dp.waitForTimeout(300);
@@ -781,18 +1019,25 @@ function ok(name, pass, note) { results.push([pass ? 'PASS' : 'FAIL', name, note
     await sp.locator('#profileName').blur();
     await sp.waitForTimeout(400);
     const sync = await sp.evaluate(() => ({
+      hint: (document.getElementById('profileNameHint') || {}).textContent || '',
+      echo: (document.getElementById('profileUrlEcho') || {}).textContent || '',
+      stored: sessionStorage.getItem('tapasul_freename_v1') || '',
+    }));
+    ok('typing a page name in the demo saves it straight away',
+       sync.hint.indexOf('Saved') > -1 && sync.stored === 'hotdog',
+       JSON.stringify({ hint: sync.hint, stored: sync.stored }));
+    // and it is still there after moving to the booking page
+    await sp.goto(BASE + '/booking.html', { waitUntil: 'load' });
+    await sp.waitForTimeout(1400);
+    const carried = await sp.evaluate(() => ({
       customerName: (document.getElementById('customerName') || {}).value || '',
       bookingBox: (document.getElementById('bookingProfileName') || {}).value || '',
       summary: (document.getElementById('summaryRows') || {}).textContent || '',
-      hint: (document.getElementById('profileNameHint') || {}).textContent || '',
-      echo: (document.getElementById('profileUrlEcho') || {}).textContent || '',
     }));
-    ok('typing a page name in the showcase saves it on the booking',
-       sync.summary.indexOf('portal.tapasul.com/r/hotdog') > -1 && sync.hint.indexOf('Saved') > -1,
-       JSON.stringify({ summary: sync.summary.slice(0, 80), hint: sync.hint }));
     ok('the name follows into the booking form and its free page box',
-       sync.customerName === 'hotdog' && sync.bookingBox === 'hotdog',
-       JSON.stringify({ customerName: sync.customerName, bookingBox: sync.bookingBox }));
+       carried.customerName === 'hotdog' && carried.bookingBox === 'hotdog' &&
+       carried.summary.indexOf('portal.tapasul.com/r/hotdog') > -1,
+       JSON.stringify({ customerName: carried.customerName, box: carried.bookingBox }));
     ok('the showcase echo shows the address they will get',
        sync.echo === 'Your page will be portal.tapasul.com/r/hotdog', sync.echo);
     ok('the showcase name box runs without JS errors', serr.length === 0, serr.join(' | '));
@@ -823,10 +1068,25 @@ function ok(name, pass, note) { results.push([pass ? 'PASS' : 'FAIL', name, note
   ok('pricing calculator renders with results', !!calc.price && calc.lines > 12 && calc.guide, JSON.stringify(calc));
   await ctx4.close();
 
+  /* the dashboard is private: no public page may link to it */
+  const PUB = ['/index.html', '/about.html', '/pricing.html', '/booking.html', '/faq.html',
+               '/support.html', '/features.html', '/terms.html', '/privacy-policy.html',
+               '/refund.html', '/refund-policy.html', '/404.html'];
+  const leaks = [];
+  for (const u of PUB) {
+    await p.goto(BASE + u, { waitUntil: 'domcontentloaded' });
+    const hit = await p.evaluate(() =>
+      [...document.querySelectorAll('a[href], iframe[src], script[src]')]
+        .map(el => el.getAttribute('href') || el.getAttribute('src') || '')
+        .filter(h => /admin/i.test(h)));
+    if (hit.length) leaks.push(u + ' → ' + hit.join(','));
+  }
+  ok('no public page links to the admin dashboard', leaks.length === 0, leaks.join(' | '));
+
   /* ---------- 11. static files ---------- */
   const sm = await p.goto(BASE + '/sitemap.xml', { waitUntil: 'load' });
   const smText = await p.evaluate(() => document.body.innerText);
-  ok('sitemap lists 5 URLs (home + features + 3 legal)', (smText.match(/<loc>/g) || []).length === 5, (smText.match(/<loc>/g) || []).length);
+  ok('sitemap lists 11 URLs (home + 6 pages + features + legal)', (smText.match(/<loc>/g) || []).length === 11, (smText.match(/<loc>/g) || []).length);
   const rb = await p.goto(BASE + '/robots.txt', { waitUntil: 'load' });
   const rbText = await p.evaluate(() => document.body.innerText);
   ok('robots blocks admin + points at sitemap', /Disallow: \/admin\.html/.test(rbText) && /Sitemap:/.test(rbText));

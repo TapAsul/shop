@@ -1,0 +1,482 @@
+<!DOCTYPE html>
+<html lang="en" data-page="booking">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="index,follow">
+  <meta name="theme-color" content="#0881ef">
+
+  <!-- seo:begin — generated from site.config.js by `node tools/build-seo.js`.
+       Edit site.config.js, not this block. Cloudflare runs the build for you. -->
+  <title>Book an appointment — TapAsul</title>
+  <meta name="description" content="Pick a date and time to have your TapAsul NFC card set up — tell us what to print, choose your features, and confirm by email.">
+  <link rel="canonical" href="https://tapasul.example/booking.html">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="TapAsul">
+  <meta property="og:title" content="Book an appointment — TapAsul">
+  <meta property="og:description" content="Pick a date and time to have your TapAsul NFC card set up — tell us what to print, choose your features, and confirm by email.">
+  <meta property="og:url" content="https://tapasul.example/booking.html">
+  <meta property="og:image" content="https://tapasul.example/assets/social-preview.png">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Book an appointment — TapAsul">
+  <meta name="twitter:description" content="Pick a date and time to have your TapAsul NFC card set up — tell us what to print, choose your features, and confirm by email.">
+  <meta name="twitter:image" content="https://tapasul.example/assets/social-preview.png">
+  <!-- seo:end -->
+
+  <!-- Icons -->
+  <link rel="icon" type="image/svg+xml" href="favicon.svg">
+  <link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
+  <link rel="manifest" href="manifest.webmanifest">
+
+  <!-- Styles. Fonts fall back to system stack — no blocking network request. -->
+  <link rel="preload" href="assets/fonts/inter-latin.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="assets/fonts/outfit-latin.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="fonts.css">
+  <link rel="stylesheet" href="styles.css">
+
+</head>
+
+<body>
+
+  <!-- Shown only if the site files did not all arrive (see the boot check
+       at the bottom of this file). Everything else on the page is fine. -->
+  <div class="load-error" id="loadError" hidden>
+    <span class="load-error__icon" aria-hidden="true">!</span>
+    <span class="load-error__body">
+      <strong>This page did not finish loading.</strong>
+      This page arrived, but the rest of the site did not. The whole folder has to
+      be uploaded together &mdash; <b>script.js</b>, <b>site.config.js</b>, <b>logo.js</b>
+      and the <b>assets/</b> folder must all sit next to index.html. Then refresh.
+    </span>
+    <button type="button" class="load-error__close" id="loadErrorClose" aria-label="Dismiss this message">&times;</button>
+  </div>
+
+
+  <!-- ============ PRIVACY CONSENT GATE ============
+       Blocks the page until the visitor accepts or declines. If they decline
+       we never store anything locally and never load analytics.
+       Set privacyConsent.enabled = false in site.config.js to remove it. -->
+  <div class="consent" id="consentGate" hidden>
+    <div class="consent__card" role="dialog" aria-modal="true" aria-labelledby="consentTitle" aria-describedby="consentBody">
+      <img class="consent__mark" src="assets/logo-frog.svg" alt="" width="40" height="52">
+      <h2 id="consentTitle">Before you continue</h2>
+      <p id="consentBody"></p>
+      <div class="consent__actions">
+        <button class="btn btn--primary" type="button" id="consentAccept">Accept and continue</button>
+        <button class="btn btn--ghost" type="button" id="consentDecline">Continue without tracking</button>
+      </div>
+      <p class="consent__fine"><a href="privacy-policy.html">Read our privacy notice</a></p>
+    </div>
+  </div>
+
+  <a class="skip-link" href="#main" data-text="content.labels.skipToContent">Skip to content</a>
+
+  <!-- ================= HEADER ================= -->
+  <header class="header">
+    <div class="container header__inner">
+      <a href="index.html" class="logo" aria-label="TapAsul — home">
+        <span class="logo__mark" aria-hidden="true">
+          <img src="assets/logo-frog.svg" alt="" width="24" height="31" data-logo="mark">
+        </span>
+        <span class="logo__text" data-brand-text>Tap<span>Asul</span></span>
+      </a>
+
+      <nav class="nav" aria-label="Primary">
+        <a href="index.html" data-text="content.nav.home">Home</a>
+        <a href="pricing.html" data-text="content.nav.products">Product &amp; Pricing</a>
+        <a href="about.html" data-text="content.nav.about">About Us</a>
+        <a href="booking.html" class="is-active" aria-current="page" data-text="content.nav.booking">Booking</a>
+      </nav>
+
+      <div class="header__cta">
+        <a href="booking.html" class="btn btn--primary btn--sm">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+          <span class="cta-label" data-text="content.nav.order">Order Now</span>
+        </a>
+
+        <button class="nav-toggle" type="button" id="navToggle"
+                aria-expanded="false" aria-controls="mobileDrawer" aria-label="Open menu">
+          <svg class="nav-toggle__open" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M3 6h18M3 12h18M3 18h18"/></svg>
+          <svg class="nav-toggle__close" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M18 6L6 18M6 6l12 12"/></svg>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- mobile drawer -->
+  <div class="drawer" id="mobileDrawer">
+    <ul>
+      <a href="index.html" data-text="content.nav.home">Home</a>
+      <a href="pricing.html" data-text="content.nav.products">Product &amp; Pricing</a>
+      <a href="about.html" data-text="content.nav.about">About Us</a>
+      <a href="booking.html" data-text="content.nav.booking">Booking</a>
+    </ul>
+    <a href="booking.html" class="btn btn--primary btn--block" data-text="content.nav.order">Order Now</a>
+  </div>
+
+  <main id="main">
+    <!-- ================= PAGE INTRO ================= -->
+    <section class="page-head" id="top">
+      <div class="container">
+        <div class="page-head__inner">
+          <span class="eyebrow" data-text="content.pages.booking.eyebrow">Booking</span>
+          <h1 data-text="content.pages.booking.title">Book your card appointment</h1>
+          <p data-text="content.pages.booking.sub">Pick a date and a time, tell us what should be printed on your card, and we will confirm by email within one business day.</p>
+        </div>
+      </div>
+    </section>
+
+
+<!-- ================= BOOKING ================= -->
+    <section class="section booking" id="preorder">
+      <form class="container" id="preOrderForm" novalidate>
+
+        <!-- ── header bar ── -->
+        <div class="booking__head">
+          <div>
+            <span class="booking__eyebrow" id="bookingEyebrow">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>
+              Complete your booking
+            </span>
+            <p class="booking__status" id="bookingStatus">Booking status · 1 card · confirmation by email</p>
+          </div>
+          <a href="index.html#work" class="btn btn--glass btn--sm" id="bookingBack">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5"/><path d="m12 19-7-7 7-7"/></svg>
+            See my work
+          </a>
+        </div>
+
+        <!-- ── the three panels ── -->
+        <div class="booking__grid">
+
+          <!-- 1 · WHAT YOU'RE BOOKING -->
+          <section class="glass glass--types" aria-labelledby="bookingTypesLabel">
+            <header class="glass__head">
+              <h3 id="bookingTypesLabel" data-text="content.form.typeLegend">What you're booking</h3>
+              <span class="glass__badge" id="bookingTypeBadge">1 card</span>
+            </header>
+
+            <div class="booking__types" id="bookingTypes"></div>
+
+            <div class="booking__qty">
+              <span class="field-label" id="qtyLabel" data-text="content.form.qtyLabel">Quantity</span>
+              <div class="qty" role="group" aria-labelledby="qtyLabel">
+                <button type="button" id="qtyMinus" aria-label="Decrease quantity">−</button>
+                <input type="number" id="orderQty" name="quantity" value="1" min="1" max="999"
+                       inputmode="numeric" aria-label="Quantity">
+                <button type="button" id="qtyPlus" aria-label="Increase quantity">+</button>
+              </div>
+            </div>
+
+            <!-- the customer's free profile page, claimed during booking -->
+            <div class="booking__freepage" id="bookingFreePage">
+              <h4 class="freepage__title" data-text="content.form.freePageTitle">Your free page</h4>
+              <p class="freepage__note" data-text="content.form.freePageNote">Every TapAsul card comes with its own profile page — free. We'll switch it on when your card is ready.</p>
+              <div class="showcase__url freepage__url">
+                <span class="showcase__urlBase">portal.tapasul.com/r/</span>
+                <input class="showcase__urlInput" id="bookingProfileName" type="text" maxlength="30"
+                       autocomplete="off" spellcheck="false" placeholder="yourname" aria-label="Your page name">
+              </div>
+              <p class="freepage__hint" data-text="content.form.freePageHint">Your name or your shop name — it saves as you type.</p>
+              <p class="freepage__echo" id="bookingProfileEcho" role="status"></p>
+            </div>
+
+            <!-- the "choose your feature" picker (Standard card) -->
+            <div class="feature-pick-card" id="featurePickCard">
+              <fieldset class="booking__features" id="featurePickBlock" hidden>
+                <legend class="field-label" id="featurePickLabel">Your feature</legend>
+                <p class="field__hint" id="featurePickHint"></p>
+                <div class="feature-chips" id="featurePickList">
+                  <!-- generated from site.config.js -> inside.featured -->
+                </div>
+                <p class="field__error" id="featurePickError" role="alert"></p>
+                <p class="feature-pick__saved" id="featurePickSaved"></p>
+              </fieldset>
+            </div>
+
+            <div class="booking__where">
+              <span class="field-label" data-text="content.form.locationLabel">Where we meet</span>
+              <p class="booking__where-name" id="bookingLocation"></p>
+              <p class="booking__where-note" id="bookingLocationNote"></p>
+              <p class="booking__where-note" id="bookingBring"></p>
+            </div>
+          </section>
+
+          <!-- 2 · APPOINTMENT DETAILS -->
+          <section class="glass glass--details" aria-labelledby="bookingDetailsLabel">
+            <header class="glass__head">
+              <h3 id="bookingDetailsLabel" data-text="content.steps.details.title">Appointment details</h3>
+              <span class="glass__badge glass__badge--ok">Free to book</span>
+            </header>
+
+            <div class="field datepick">
+              <label for="bookingDate" data-text="content.form.dateLabel">Preferred date</label>
+
+              <!-- the real value — kept in the form, read by everything else -->
+              <input class="datepick__input" type="date" id="bookingDate" name="date" required
+                     tabindex="-1" aria-hidden="true" aria-describedby="dateError">
+
+              <!-- what people actually see: today's pick plus a calendar you can read -->
+              <button class="datepick__trigger" type="button" id="dateTrigger"
+                      aria-expanded="false" aria-controls="datePanel">
+                <span class="datepick__value" id="dateValue">Pick a date</span>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                     stroke-linecap="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M8 3v4M16 3v4M3 11h18"/></svg>
+              </button>
+
+              <div class="datepick__panel" id="datePanel" hidden>
+                <div class="datepick__head">
+                  <button type="button" class="datepick__nav" id="calPrev" aria-label="Previous month">&#8249;</button>
+                  <strong id="calMonth" aria-live="polite"></strong>
+                  <button type="button" class="datepick__nav" id="calNext" aria-label="Next month">&#8250;</button>
+                </div>
+                <div class="datepick__dow" aria-hidden="true">
+                  <span>Su</span><span>Mo</span><span>Tu</span><span>We</span><span>Th</span><span>Fr</span><span>Sa</span>
+                </div>
+                <div class="datepick__grid" id="calGrid"></div>
+                <div class="datepick__legend">
+                  <span><i class="datepick__key datepick__key--full"></i> Fully booked</span>
+                  <span><i class="datepick__key datepick__key--closed"></i> Closed</span>
+                </div>
+              </div>
+
+              <p class="field__hint" id="dateHint" role="status"></p>
+              <p class="field__error" id="dateError" role="alert"></p>
+            </div>
+
+            <div class="field">
+              <span class="field-label" id="slotLabel" data-text="content.form.slotLabel">Preferred time</span>
+              <div class="slots" id="slotGrid" role="radiogroup" aria-labelledby="slotLabel"></div>
+              <p class="field__hint" id="slotHint" role="status"></p>
+            </div>
+
+            <div class="two-col">
+              <div class="field">
+                <label for="customerName" data-text="content.form.nameLabel">Full name</label>
+                <input class="input" type="text" id="customerName" name="name" autocomplete="name"
+                       placeholder="e.g. Juan Dela Cruz" data-placeholder="content.form.namePlaceholder"
+                       required aria-describedby="nameError">
+                <p class="field__error" id="nameError" role="alert"></p>
+              </div>
+              <div class="field">
+                <label for="customerEmail" data-text="content.form.emailLabel">Email address</label>
+                <input class="input" type="email" id="customerEmail" name="email" autocomplete="email"
+                       placeholder="juan@example.com" data-placeholder="content.form.emailPlaceholder"
+                       required aria-describedby="emailError">
+                <p class="field__error" id="emailError" role="alert"></p>
+              </div>
+            </div>
+
+            <div class="two-col">
+              <div class="field">
+                <label for="customerPhone" data-text="content.form.phoneLabel">Mobile number</label>
+                <input class="input" type="tel" id="customerPhone" name="phone" autocomplete="tel"
+                       placeholder="09XX XXX XXXX" data-placeholder="content.form.phonePlaceholder"
+                       required aria-describedby="phoneError">
+                <p class="field__error" id="phoneError" role="alert"></p>
+              </div>
+              <div class="field">
+                <label for="paymentMethod" data-text="content.form.paymentLabel">Payment method</label>
+                <select class="input" id="paymentMethod" name="paymentMethod"></select>
+                <p class="field__hint" id="paymentHint"></p>
+              </div>
+            </div>
+
+            <div class="field">
+              <label for="shippingZone" data-text="content.form.zoneLabel">Delivery area</label>
+              <select class="input" id="shippingZone" name="shippingZone"></select>
+              <p class="field__hint" id="shippingHint"></p>
+            </div>
+
+            <div class="field">
+              <label for="customerAddress" data-text="content.form.addressLabel">Delivery address</label>
+              <textarea class="input" id="customerAddress" name="address" rows="2"
+                        data-placeholder="content.form.addressPlaceholder"
+                        placeholder="House no., street, barangay, city, province, ZIP"
+                        aria-describedby="addressError"></textarea>
+              <p class="field__error" id="addressError" role="alert"></p>
+              <p class="field__hint" id="addressHint"></p>
+            </div>
+
+            <div class="field">
+              <label for="bookingNotes" data-text="content.form.notesLabel">What should be on your card?</label>
+              <textarea class="input" id="bookingNotes" name="notes" rows="3"
+                        data-placeholder="content.form.notesPlaceholder"
+                        placeholder="Your name, job title, links, the colours you want…"></textarea>
+              <p class="field__hint" data-text="content.form.notesHint">Optional — but it saves a message later.</p>
+            </div>
+
+            <div class="booking__goodto">
+              <span class="field-label">Good to know</span>
+              <ul>
+                <li id="bookingDuration"></li>
+                <li id="bookingConfirmNote"></li>
+                <li id="bookingRescheduleNote"></li>
+                <li id="bookingCancelNote"></li>
+              </ul>
+            </div>
+          </section>
+
+          <!-- 3 · SUMMARY -->
+          <section class="glass glass--summary" aria-labelledby="bookingSummaryLabel">
+            <header class="glass__head">
+              <h3 id="bookingSummaryLabel" data-text="content.form.summaryTitle">Booking summary</h3>
+              <span class="glass__badge" id="bookingItemBadge">1 item</span>
+            </header>
+
+            <div class="summary__items" id="summaryItems"></div>
+
+            <div class="summary__promo">
+              <label class="field-label" for="promoCode" data-text="content.form.promoLabel">Promo code</label>
+              <div class="summary__promo-row">
+                <input class="input" type="text" id="promoCode" name="promo" placeholder="Enter code"
+                       autocomplete="off" spellcheck="false">
+                <button class="btn btn--glass btn--sm" type="button" id="promoApply" data-text="content.form.promoApply">Apply</button>
+              </div>
+              <p class="field__hint" id="promoHint" role="status"></p>
+            </div>
+
+            <dl class="summary__rows" id="summaryRows"></dl>
+
+            <div class="summary__total">
+              <div>
+                <span class="summary__total-label" data-text="content.form.totalLabel">Total due</span>
+                <span class="summary__recurring" id="displayHosting" hidden></span>
+              </div>
+              <strong id="displayTotal">₱0</strong>
+            </div>
+
+            <div class="form-status" id="formStatus" role="status" aria-live="polite"></div>
+          </section>
+        </div>
+
+        <!-- ── bottom bar: steps + the big confirm button ── -->
+        <div class="booking__bar">
+          <ol class="booking__steps" id="bookingSteps" aria-label="Booking progress">
+            <li class="is-done"><span class="booking__dot"></span>Card</li>
+            <li class="is-done"><span class="booking__dot"></span>Slot</li>
+            <li id="bookingStepDetails"><span class="booking__dot"></span>Details</li>
+            <li id="bookingStepConfirm"><span class="booking__dot"></span>Confirm</li>
+          </ol>
+
+          <button type="submit" class="booking__cta" id="submitBtn">
+            <span data-text="content.form.submit">Confirm booking</span>
+            <span class="booking__cta-total" id="bookingCtaTotal"></span>
+          </button>
+        </div>
+
+        <div class="booking__notes">
+          <p class="form-note" id="paymentNote"></p>
+          <p class="form-note">
+            <a href="support.html#privacy" id="privacyLink" data-text="content.form.privacyLink">How we handle your data</a> —
+            <span id="privacyNote"></span>
+          </p>
+        </div>
+      </form>
+    </section>
+
+    
+
+<!-- ================= DELIVERY & SHIPPING ================= -->
+    <section class="section section--tight" id="delivery">
+      <div class="container">
+        <div class="section-head">
+          <h2 data-text="content.sections.delivery.title">Delivery &amp; shipping</h2>
+          <p data-text="content.sections.delivery.sub">How your order gets to you, and what it costs.</p>
+        </div>
+        <ol class="steps" id="deliverySteps">
+          <!-- generated from site.config.js -->
+        </ol>
+        <div class="delivery-grid" id="deliveryInfo">
+          <!-- generated from site.config.js -->
+        </div>
+        <p class="form-note" id="shippingNote"></p>
+      </div>
+    </section>
+
+    
+  </main>
+
+  <!-- ================= FOOTER ================= -->
+  <footer class="footer">
+    <div class="container">
+      <div class="footer__grid">
+        <div>
+          <a href="index.html" class="logo" aria-label="TapAsul — home">
+            <span class="logo__mark" aria-hidden="true">
+              <img src="assets/logo-frog-white.svg" alt="" width="24" height="31" data-logo="mark-white">
+            </span>
+            <span class="logo__text" data-brand-text>Tap<span>Asul</span></span>
+          </a>
+          <p class="footer__blurb" id="footerBlurb"></p>
+        </div>
+
+        <div>
+          <h4 data-text="content.footer.exploreTitle">Explore</h4>
+          <ul>
+            <li><a href="pricing.html" data-text="content.nav.products">Product &amp; Pricing</a></li>
+            <li><a href="index.html#live" data-text="content.nav.live">Live profiles</a></li>
+            <li><a href="features.html" data-text="content.nav.features">Inside the card</a></li>
+            <li><a href="index.html#work" data-text="content.nav.work">My work</a></li>
+            <li><a href="booking.html" data-text="content.nav.booking">Booking</a></li>
+          </ul>
+        </div>
+
+        <div>
+          <h4 data-text="content.footer.helpTitle">Help</h4>
+          <ul>
+            <li><a href="faq.html" data-text="content.nav.faq">FAQ</a></li>
+            <li><a href="support.html" data-text="content.nav.support">Contact &amp; Support</a></li>
+            <li><a href="booking.html#delivery" data-text="content.footer.delivery">Delivery &amp; shipping</a></li>
+            <li><a href="support.html#privacy" data-text="content.footer.privacyNote">Your data</a></li>
+          </ul>
+        </div>
+
+        <div>
+          <h4 data-text="content.footer.contactTitle">Contact</h4>
+          <ul id="footerContact">
+            <!-- filled from config -->
+          </ul>
+        </div>
+
+        <div>
+          <h4 data-text="content.footer.legalTitle">Legal</h4>
+          <ul>
+            <li><a href="terms.html" data-text="content.footer.terms">Terms of Use</a></li>
+            <li><a href="refund.html" data-text="content.footer.refund">Refund Policy</a></li>
+            <li><a href="privacy-policy.html" data-text="content.footer.privacy">Privacy Policy</a></li>
+            <li><a href="refund-policy.html" data-text="content.footer.refundFull">Full refund terms</a></li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="footer__bottom">
+        <span>© <span id="year"></span> <span data-brand-name>TapAsul</span>. <span data-text="content.footer.copyright">All rights reserved.</span></span>
+        <span data-text="content.hero.pill">More Than Just A Tap</span>
+      </div>
+    </div>
+  </footer>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+  <!-- order matters: config → shared helpers → icons → site -->
+  <script src="site.config.js"></script>
+  <script src="seo.js"></script>
+  <script src="icons.js"></script>
+  <script src="logo.js" defer></script>
+  <script src="script.js" defer></script>
+  <noscript>
+    <div style="padding:16px;background:#fef3c7;color:#92400e;text-align:center;font-family:system-ui,sans-serif;">
+      This page works best with JavaScript enabled. You can still email us to order.
+    </div>
+  </noscript>
+  <!-- ── BOOT CHECK ───────────────────────────────────────────────────
+       Runs on its own, before anything else. If the site scripts did not
+       arrive, this shows a plain-English message instead of empty boxes.
+       If you ever edit the code inside this script block, run
+       `node tools/update-csp-hash.js` so the SHA-256 hash in _headers
+       matches again (Cloudflare blocks it otherwise).
+       ------------------------------------------------------------------ -->
+  <script id="bootCheck">(function(){function fail(){if(document.documentElement.dataset.siteReady==="1")return;var el=document.getElementById("loadError");if(el)el.hidden=false;}function wire(){var b=document.getElementById("loadErrorClose");if(b)b.addEventListener("click",function(){var el=document.getElementById("loadError");if(el)el.hidden=true;});}if(document.readyState==="complete"){setTimeout(fail,1200);wire();}else{window.addEventListener("load",function(){setTimeout(fail,1200);wire();});}})();</script>
+</body>
+</html>

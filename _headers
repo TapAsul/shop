@@ -11,7 +11,7 @@
   X-Frame-Options: SAMEORIGIN
   Permissions-Policy: geolocation=(), microphone=(), camera=(), interest-cohort=()
   Strict-Transport-Security: max-age=31536000; includeSubDomains
-  Content-Security-Policy: default-src 'self'; img-src 'self' data: blob:; font-src 'self'; style-src 'self' 'unsafe-inline'; script-src 'self' 'sha256-08M5/L7YivlNj7Kyt3/W17w1M1hLpuk+mxAr+e0rI2g='; connect-src 'self' https:; form-action 'self' https:; frame-ancestors 'self'; base-uri 'self'; object-src 'none'
+  Content-Security-Policy: default-src 'self'; img-src 'self' data: blob:; font-src 'self'; style-src 'self' 'unsafe-inline'; script-src 'self' 'sha256-YrlfgUkyKstOxHI60+6xE7YvQQI5ZyI8q53E2HZW+g8='; connect-src 'self' https:; form-action 'self' https:; frame-ancestors 'self'; base-uri 'self'; object-src 'none'
 
 # --- HTML + config: always fresh, so your edits show up immediately -------
 /*.html
@@ -25,9 +25,6 @@
 
 # --- static assets: cache for a year, they never change -------------------
 /assets/*
-  Cache-Control: public, max-age=31536000, immutable
-
-/three.min.js
   Cache-Control: public, max-age=31536000, immutable
 
 /favicon.svg

@@ -22,6 +22,28 @@ Your live site: **https://tapasul.github.io/TapAsul/v2/**
 > `three.min.js` file, delete it there — it is no longer used, and removing it
 > makes the site load faster.
 
+## What should NOT be in the folder
+
+The zip is exactly 35 items at the top level. If you see any of these, they are
+left over from an older version and can be **deleted** — nothing on the site
+uses them:
+
+| Delete | Why |
+|---|---|
+| `three.min.js` | The old 3D studio is gone. 590 KB of dead weight. |
+| `interactive.html`, `projects.html`, `tap-portfolio.html` | Old prototypes, replaced by the current `index.html`. |
+| `v2/` (a folder inside the site) | The previous GitHub Pages copy. Publishing two copies of the site confuses Google — keep one. |
+| `.vscode/` | Your editor's settings. Harmless, but not part of the site (`.gitignore` now skips it). |
+
+Everything else in the list belongs: `assets/`, `functions/`, `tools/`,
+`_headers`, `.assetsignore`, the HTML pages, `script.js`, `site.config.js`,
+`schema.sql`, `wrangler.toml` and the docs.
+
+**Check `functions/` before you push** — open it. It must contain
+`api/bookings.js`. That one file is what saves bookings to D1 and emails them.
+If it is missing, the booking form still works but only by opening the
+customer's mail app.
+
 ## Adding your own work photos
 
 1. Drop your client photos into `assets/work/` inside the folder.
@@ -36,30 +58,37 @@ Save the file, upload it again, and the tiles appear in **My work**.
 
 ## After you upload — the quick check
 
-Open the live site and confirm these seven things:
+Open the live site and confirm these twelve things:
 
 1. Your frog logo shows in the top-left **and** in the popup before you continue.
-2. The **Products** section shows **two** cards: Standard ₱999 and Premium ₱2,499.
-3. A **Live profiles** strip scrolls sideways to the right with
-   `portal.tapasul.com/r/…` links, with a blue **“Claim my free page”** button
-   and the line *“Free with your digital card purchase”* under it.
-4. The section **“What's inside your digital card?”** sits under it, with two
-   columns and a **“Check the features ↓”** link on each.
-5. Clicking **“Check the features ↓”** opens a **new page** —
-   `https://tapasul.github.io/TapAsul/v2/features.html` — with the two tier
-   cards, the light-blue **Featured features** band of 8 tiles and the
-   “your page is free” button. (The band is **not** on the home page any more.)
-6. The card in the hero **turns over** when you drag it (the back shows the QR
-   code), and there is a **My work** section under “What's inside your card?”.
-7. Clicking **“Check the features ↓”** opens `…/v2/features.html` and that page
-   shows **only** the Featured features band — nothing else.
-8. The booking form shows **Your 2 features** (8 chips, pick 2).
-9. The **4-step funnel** works: click **Select Digital Card** → the “your page
-   is free” box appears with the cursor in the name field → type a name → the
-   address turns into `portal.tapasul.com/r/yourname` → click **Claim my free
-   page** → “What's inside your digital card?” → click **Book the standard
-   card** → the booking section opens with that name in **Full name** and a
-   **“Your page”** line in the summary.
+2. The header is **Home · Product & Pricing · About Us · Booking** plus an
+   **Order Now** button — and it is the same on every page.
+3. **FAQ**, **Contact & Support**, **Privacy Policy** and **Terms of Use** are
+   **only in the footer** — they are not in the header and not on the home page.
+4. **Home** shows the hero, the **My work** cards, the **Live profiles** demo
+   (with the blue **“Claim my free page”** button) and the two price cards —
+   in that order.
+5. **Product & Pricing** shows the two cards — Standard ₱999 and Premium
+   ₱2,499 — and under them the **“Standard or Premium”** table with ticks,
+   dashes, text rows and a **Choose Standard** / **Choose Premium** button.
+6. On a phone the table's row labels stay put while the two columns swipe
+   sideways (there is a **“Swipe to compare →”** hint).
+7. **“Inside the card”** in the footer opens `features.html` with the
+   light-blue **Featured features** band of 8 tiles.
+8. **Booking** has the whole order form: name, email, phone, page name, date,
+   time, the 3 delivery zones, the 4 payment options, promo code and the
+   running summary. The Standard card shows **Your feature** (8 chips — pick
+   **one**); a second pick is refused with a short message.
+9. The **demo funnel** works: on Home click **Select Digital Card** → you land
+   on **Booking** with that card chosen → type a page name → the summary shows
+   `portal.tapasul.com/r/yourname`.
+10. On Home, **Claim my free page** → you land on the **comparison table** on
+    Product & Pricing, and **Choose Premium** there → **Booking** opens with
+    the Premium card picked.
+11. The card in the hero **turns over** when you drag it (the back shows the QR
+    code). The **My work** tiles sit under the hero — tap one and the picture
+    opens big; tap the picture again to zoom in.
+12. **About Us** lists the team, and the FAQ page opens all 14 questions.
 
 If any of those is missing, press Ctrl+Shift+R once more — GitHub Pages caches
 files for a minute or two.

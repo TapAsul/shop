@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="en" data-page="about">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="index,follow">
+  <meta name="theme-color" content="#0881ef">
+
+  <!-- seo:begin — generated from site.config.js by `node tools/build-seo.js`.
+       Edit site.config.js, not this block. Cloudflare runs the build for you. -->
+  <title>About Us — TapAsul</title>
+  <meta name="description" content="The TapAsul team in Quezon City: who prints the cards, who writes the profile pages and who answers your messages.">
+  <link rel="canonical" href="https://tapasul.example/about.html">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="TapAsul">
+  <meta property="og:title" content="About Us — TapAsul">
+  <meta property="og:description" content="The TapAsul team in Quezon City: who prints the cards, who writes the profile pages and who answers your messages.">
+  <meta property="og:url" content="https://tapasul.example/about.html">
+  <meta property="og:image" content="https://tapasul.example/assets/social-preview.png">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="About Us — TapAsul">
+  <meta name="twitter:description" content="The TapAsul team in Quezon City: who prints the cards, who writes the profile pages and who answers your messages.">
+  <meta name="twitter:image" content="https://tapasul.example/assets/social-preview.png">
+  <!-- seo:end -->
+
+  <!-- Icons -->
+  <link rel="icon" type="image/svg+xml" href="favicon.svg">
+  <link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
+  <link rel="manifest" href="manifest.webmanifest">
+
+  <!-- Styles. Fonts fall back to system stack — no blocking network request. -->
+  <link rel="preload" href="assets/fonts/inter-latin.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="assets/fonts/outfit-latin.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="fonts.css">
+  <link rel="stylesheet" href="styles.css">
+
+</head>
+
+<body>
+
+  <!-- Shown only if the site files did not all arrive (see the boot check
+       at the bottom of this file). Everything else on the page is fine. -->
+  <div class="load-error" id="loadError" hidden>
+    <span class="load-error__icon" aria-hidden="true">!</span>
+    <span class="load-error__body">
+      <strong>This page did not finish loading.</strong>
+      This page arrived, but the rest of the site did not. The whole folder has to
+      be uploaded together &mdash; <b>script.js</b>, <b>site.config.js</b>, <b>logo.js</b>
+      and the <b>assets/</b> folder must all sit next to index.html. Then refresh.
+    </span>
+    <button type="button" class="load-error__close" id="loadErrorClose" aria-label="Dismiss this message">&times;</button>
+  </div>
+
+
+  <!-- ============ PRIVACY CONSENT GATE ============
+       Blocks the page until the visitor accepts or declines. If they decline
+       we never store anything locally and never load analytics.
+       Set privacyConsent.enabled = false in site.config.js to remove it. -->
+  <div class="consent" id="consentGate" hidden>
+    <div class="consent__card" role="dialog" aria-modal="true" aria-labelledby="consentTitle" aria-describedby="consentBody">
+      <img class="consent__mark" src="assets/logo-frog.svg" alt="" width="40" height="52">
+      <h2 id="consentTitle">Before you continue</h2>
+      <p id="consentBody"></p>
+      <div class="consent__actions">
+        <button class="btn btn--primary" type="button" id="consentAccept">Accept and continue</button>
+        <button class="btn btn--ghost" type="button" id="consentDecline">Continue without tracking</button>
+      </div>
+      <p class="consent__fine"><a href="privacy-policy.html">Read our privacy notice</a></p>
+    </div>
+  </div>
+
+  <a class="skip-link" href="#main" data-text="content.labels.skipToContent">Skip to content</a>
+
+  <!-- ================= HEADER ================= -->
+  <header class="header">
+    <div class="container header__inner">
+      <a href="index.html" class="logo" aria-label="TapAsul — home">
+        <span class="logo__mark" aria-hidden="true">
+          <img src="assets/logo-frog.svg" alt="" width="24" height="31" data-logo="mark">
+        </span>
+        <span class="logo__text" data-brand-text>Tap<span>Asul</span></span>
+      </a>
+
+      <nav class="nav" aria-label="Primary">
+        <a href="index.html" data-text="content.nav.home">Home</a>
+        <a href="pricing.html" data-text="content.nav.products">Product &amp; Pricing</a>
+        <a href="about.html" class="is-active" aria-current="page" data-text="content.nav.about">About Us</a>
+        <a href="booking.html" data-text="content.nav.booking">Booking</a>
+      </nav>
+
+      <div class="header__cta">
+        <a href="booking.html" class="btn btn--primary btn--sm">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+          <span class="cta-label" data-text="content.nav.order">Order Now</span>
+        </a>
+
+        <button class="nav-toggle" type="button" id="navToggle"
+                aria-expanded="false" aria-controls="mobileDrawer" aria-label="Open menu">
+          <svg class="nav-toggle__open" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M3 6h18M3 12h18M3 18h18"/></svg>
+          <svg class="nav-toggle__close" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M18 6L6 18M6 6l12 12"/></svg>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- mobile drawer -->
+  <div class="drawer" id="mobileDrawer">
+    <ul>
+      <a href="index.html" data-text="content.nav.home">Home</a>
+      <a href="pricing.html" data-text="content.nav.products">Product &amp; Pricing</a>
+      <a href="about.html" data-text="content.nav.about">About Us</a>
+      <a href="booking.html" data-text="content.nav.booking">Booking</a>
+    </ul>
+    <a href="booking.html" class="btn btn--primary btn--block" data-text="content.nav.order">Order Now</a>
+  </div>
+
+  <main id="main">
+    <!-- ================= PAGE INTRO ================= -->
+    <section class="page-head" id="top">
+      <div class="container">
+        <div class="page-head__inner">
+          <span class="eyebrow" data-text="content.pages.about.eyebrow">About Us</span>
+          <h1 data-text="content.pages.about.title">The people behind the tap</h1>
+          <p data-text="content.pages.about.sub">A small team in Quezon City printing cards, writing the profile pages and answering the messages ourselves.</p>
+        </div>
+      </div>
+    </section>
+
+
+<!-- ================= TEAM ================= -->
+    <section class="section section--muted" id="team">
+      <div class="container">
+        <div class="section-head">
+          <h2 data-text="content.sections.team.title">Meet the leadership</h2>
+          <p data-text="content.sections.team.sub">The team driving contactless technology and modern digital solutions.</p>
+        </div>
+        <div class="team-grid" id="teamGrid" data-render="team">
+          <!-- generated from site.config.js -->
+        </div>
+      </div>
+    </section>
+
+    
+
+    <!-- ================= NEXT STEP ================= -->
+    <section class="page-cta">
+      <div class="container">
+        <div class="page-cta__inner">
+          <div>
+            <h2 data-text="content.ctaBand.title">Ready when you are</h2>
+            <p data-text="content.ctaBand.sub">Pick a date, bring your logo if you have one, and we will set the card up in the appointment.</p>
+          </div>
+          <div class="page-cta__actions">
+            <a href="booking.html" class="btn btn--primary" data-text="content.ctaBand.primary">Book an appointment</a>
+            <a href="pricing.html" class="btn btn--ghost" data-text="content.ctaBand.secondary">See the prices</a>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ================= FOOTER ================= -->
+  <footer class="footer">
+    <div class="container">
+      <div class="footer__grid">
+        <div>
+          <a href="index.html" class="logo" aria-label="TapAsul — home">
+            <span class="logo__mark" aria-hidden="true">
+              <img src="assets/logo-frog-white.svg" alt="" width="24" height="31" data-logo="mark-white">
+            </span>
+            <span class="logo__text" data-brand-text>Tap<span>Asul</span></span>
+          </a>
+          <p class="footer__blurb" id="footerBlurb"></p>
+        </div>
+
+        <div>
+          <h4 data-text="content.footer.exploreTitle">Explore</h4>
+          <ul>
+            <li><a href="pricing.html" data-text="content.nav.products">Product &amp; Pricing</a></li>
+            <li><a href="index.html#live" data-text="content.nav.live">Live profiles</a></li>
+            <li><a href="features.html" data-text="content.nav.features">Inside the card</a></li>
+            <li><a href="index.html#work" data-text="content.nav.work">My work</a></li>
+            <li><a href="booking.html" data-text="content.nav.booking">Booking</a></li>
+          </ul>
+        </div>
+
+        <div>
+          <h4 data-text="content.footer.helpTitle">Help</h4>
+          <ul>
+            <li><a href="faq.html" data-text="content.nav.faq">FAQ</a></li>
+            <li><a href="support.html" data-text="content.nav.support">Contact &amp; Support</a></li>
+            <li><a href="booking.html#delivery" data-text="content.footer.delivery">Delivery &amp; shipping</a></li>
+            <li><a href="support.html#privacy" data-text="content.footer.privacyNote">Your data</a></li>
+          </ul>
+        </div>
+
+        <div>
+          <h4 data-text="content.footer.contactTitle">Contact</h4>
+          <ul id="footerContact">
+            <!-- filled from config -->
+          </ul>
+        </div>
+
+        <div>
+          <h4 data-text="content.footer.legalTitle">Legal</h4>
+          <ul>
+            <li><a href="terms.html" data-text="content.footer.terms">Terms of Use</a></li>
+            <li><a href="refund.html" data-text="content.footer.refund">Refund Policy</a></li>
+            <li><a href="privacy-policy.html" data-text="content.footer.privacy">Privacy Policy</a></li>
+            <li><a href="refund-policy.html" data-text="content.footer.refundFull">Full refund terms</a></li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="footer__bottom">
+        <span>© <span id="year"></span> <span data-brand-name>TapAsul</span>. <span data-text="content.footer.copyright">All rights reserved.</span></span>
+        <span data-text="content.hero.pill">More Than Just A Tap</span>
+      </div>
+    </div>
+  </footer>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+  <!-- order matters: config → shared helpers → icons → site -->
+  <script src="site.config.js"></script>
+  <script src="seo.js"></script>
+  <script src="icons.js"></script>
+  <script src="logo.js" defer></script>
+  <script src="script.js" defer></script>
+  <noscript>
+    <div style="padding:16px;background:#fef3c7;color:#92400e;text-align:center;font-family:system-ui,sans-serif;">
+      This page works best with JavaScript enabled. You can still email us to order.
+    </div>
+  </noscript>
+  <!-- ── BOOT CHECK ───────────────────────────────────────────────────
+       Runs on its own, before anything else. If the site scripts did not
+       arrive, this shows a plain-English message instead of empty boxes.
+       If you ever edit the code inside this script block, run
+       `node tools/update-csp-hash.js` so the SHA-256 hash in _headers
+       matches again (Cloudflare blocks it otherwise).
+       ------------------------------------------------------------------ -->
+  <script id="bootCheck">(function(){function fail(){if(document.documentElement.dataset.siteReady==="1")return;var el=document.getElementById("loadError");if(el)el.hidden=false;}function wire(){var b=document.getElementById("loadErrorClose");if(b)b.addEventListener("click",function(){var el=document.getElementById("loadError");if(el)el.hidden=true;});}if(document.readyState==="complete"){setTimeout(fail,1200);wire();}else{window.addEventListener("load",function(){setTimeout(fail,1200);wire();});}})();</script>
+</body>
+</html>

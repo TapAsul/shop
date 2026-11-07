@@ -13,7 +13,12 @@ question and contact detail lives in **one file**: `site.config.js`.
 
 ```
 tapasul-site/
-├── index.html              the public page
+├── index.html              Home — hero, my work, live demo, pricing teaser
+├── pricing.html            Product & Pricing — the two cards + the comparison table
+├── about.html              About Us — who we are
+├── booking.html            Booking — the order form and the delivery steps
+├── faq.html                FAQ                (footer link only)
+├── support.html            Contact & Support  (footer link only)
 ├── features.html           the standalone "What's inside your digital card?" page
 ├── site.config.js          ⚙️  EDIT THIS — all content & pricing
 ├── seo.js                  shared SEO helpers (browser + build script)
@@ -235,7 +240,7 @@ showcase: {
     nameLabel: "Your name or business",
     namePlaceholder: "yourname",
     button: "Claim my free page",
-    next: "#inside",                     // where the button takes them
+    next: "#compare",                    // where the button takes them
   },
 },
 ```
@@ -255,10 +260,10 @@ steps, and nothing they type is lost on the way:
 
 | # | What they do | Where they land |
 |---|---|---|
-| 1 | Click **Select Digital Card** / **Select Premium Card** on a product card | The “Every card gets its own page” box, with the cursor already in the name field |
+| 1 | Click **Select Digital Card** / **Select Premium Card** on a product card | The **Booking** page, with that card already picked and the cursor in the page-name box |
 | 2 | Type the name they want | The address updates live: `portal.tapasul.com/r/kusina-ni-maria` |
-| 3 | Click **Claim my free page** | “What's inside your digital card?” (the Standard vs Premium comparison) |
-| 4 | Click **Book the standard card** / **Book the premium card** | The booking section, with their name already filled in and their page address in the summary |
+| 3 | Click **Claim my free page** on Home | The **comparison table** on Product & Pricing (`pricing.html#compare`) |
+| 4 | Click **Choose Standard** / **Choose Premium** under the table | The **Booking** page, with that tier picked and their page address in the summary |
 
 - The name is turned into a **web address** for them: spaces become dashes,
   capitals become small letters (`Kusina ni Maria` → `kusina-ni-maria`).
@@ -268,92 +273,74 @@ steps, and nothing they type is lost on the way:
   includes it, and `admin.html` shows it under **“Their free page”**.
 - Everything is still editable in `site.config.js` → `showcase.cta`:
   `urlBase` (the address), `nameLabel`, `namePlaceholder`, `button` (the
-  button text) and `next` (where the button sends them — `#inside` by default).
+  button text) and `next` (where the button sends them — `#compare` by default).
+- The page name they type is kept for the tab, so moving from Home to Booking
+  or Product & Pricing and back does not lose it.
 
-### 4b. The “Inside the card” section
+### 4b. The comparison table (Product & Pricing page)
 
-The comparison block under **Products & Pricing** is driven by one top-level
-`inside` block. Add, remove or reword a line and the page updates — no HTML edits.
+`pricing.html` carries **one** comparison — the Standard vs Premium table. It is
+driven by the top-level `compare` block in `site.config.js`, so you never touch
+HTML to change a row.
 
 ```js
-inside: {
+compare: {
+  eyebrow: "Compare",
+  title: "Standard or Premium",
+  sub: "Same tap, same free page. The Premium card is the one with your own logo on it.",
   columns: [
+    { product: "card",    label: "Standard", note: "Our artwork" },
+    { product: "premium", label: "Premium",  note: "Your own design", accent: true },
+  ],
+  groups: [
     {
-      product: "card",                     // which tier this column describes
-      name: "Standard Digital Card",
-      priceLabel: "{card} once + {hosting}/month",   // live prices
-      note: "Everything you need to get the contact — plus two features you pick.",
-      cta: "Book the standard card",       // button label (click → picks that tier)
-      items: [
-        { title: "Profile picture", text: "One photo at the top of your profile" },
-        { title: "Tagline", text: "One line that sits under your name" },
-        { title: "Bio", text: "A short paragraph about you" },
-        { title: "3 social media links", text: "Pick the three that matter" },
-        { title: "Contact info", text: "Your email and your contact number" },
-        { title: "2 features of your choice", text: "Choose any two from the list below",
-          highlight: true,                // highlight: true = the blue "star" line
-          link: { label: "Check the features", href: "features.html" } },   // one click -> the list page
+      title: "The card itself",
+      // every row has one label and one value per column
+      rows: [
+        { label: "Card finish",  values: ["Sticker print on PVC", "UV-printed PVC"] },
+        { label: "Your own logo", values: [false, true] },   // false = dash, true = tick
       ],
     },
-    {
-      product: "premium", featured: true, name: "Premium Digital Card",
-      items: [ … { title: "All of the features", text: "…", highlight: true } ],
-    },
+    // "The page it opens", "Features you can switch on", "Getting it made" …
   ],
-
-  featuredTitle: "The Featured features",
-  featuredSub:   "Standard card — choose any 2. Premium card — every one is included.",
-  featured: [                            // the catalogue of optional features
-    { icon: "star", title: "Client Reviews", text: "Let people rate you …" },
-    { icon: "briefcase", title: "Portfolio", text: "…" },
-    { icon: "images", title: "Portfolio gallery", text: "…" },
-    { icon: "lock", title: "OTP Before Entering", text: "…" },
-    { icon: "calendar", title: "Book Appointment", text: "…" },
-    { icon: "images", title: "1 slide of 5-picture carousel", text: "…" },
-    { icon: "globe", title: "URL — website, store and etc.", text: "…" },
-    { icon: "wallet", title: "Payment method", text: "…" },
-  ],
+  note: "Hosting starts the month after your card is set up. …",
 }
 ```
 
-- `product` must match a key in `pricing.products` (`card`, `premium`).
-- `icon` is any key from `icons.js` (`star`, `briefcase`, `calendar`, `images`,
-  `link`, `wallet`, `globe`, `user`, `megaphone`, `lock`, `credit-card`, …).
-- The heading above the block lives in `content.sections.inside`
-  (`eyebrow`, `title`, `sub`).
+- A value is either **plain words**, `true` (a tick) or `false` (a dash).
+- `product` must match a key in `pricing.products` (`card`, `premium`); the
+  prices in the header row come from there, so they stay in step with the cards.
+- The buttons under the table (**Choose Standard** / **Choose Premium**) open
+  `booking.html` with that tier already picked.
+- On a phone the row labels stay pinned and the two columns swipe sideways,
+  with a short “Swipe to compare →” hint.
 
-#### The Featured list has its own page
+> **The old “What's inside your digital card?” block was removed.** It repeated
+> what the table already lists, so the page had the same information twice.
+> The table is now the only comparison on the site.
 
-The two tier cards stay on the home page. The **Featured features** catalogue
-(the 8 tiles) lives on its own page — **`features.html`** — so the “Check the
-features ↓” link opens a new page instead of scrolling down.
+#### The featured-features page
 
-`features.html` is a normal page: it loads the same `site.config.js`, so
-anything you change in `inside.featured` shows up there automatically. It also
-carries the tier comparison and the “your page is free” CTA, so a visitor who
-lands there has a complete picture without going back to the home page.
-
-To put the list back on the home page, paste this block into `index.html`
-inside `#inside` (under `.inside__compare`):
-
-```html
-<div class="inside__featured" id="insideFeatured"></div>
-```
-
-and change the two `link.href` values in `site.config.js` back to
-`"#insideFeatured"`.
+The 8 optional features (Client Reviews, Portfolio, Portfolio gallery, OTP,
+Book Appointment, carousel, URLs, Payment method) live on their own page —
+**`features.html`** — reachable from the footer of every page (“Inside the
+card”). It is driven by `inside.featured` in `site.config.js`, so editing that
+list updates the page automatically. `features.html` also carries the “your
+page is free” box, so a visitor who lands there is not stuck.
 
 ### 4c. The “My work” gallery
 
-This is where you show the cards you have made — your clients' work. The
-section is driven by one block in `site.config.js`, so you never touch HTML.
+This is where you show the cards you have made — your clients' work. It sits on
+the **Home** page, straight under the hero and before the “Every card gets its
+own page” demo. The section is driven by one block in `site.config.js`, so you
+never touch HTML.
 
 ```js
 myWork: {
   enabled: true,
   eyebrow: "My work",
   title: "Cards we have made",
-  sub: "Real TapAsul cards in the wild. Tap one to open the page behind it.",
+  sub: "Real TapAsul cards in the wild — a steel fabricator, a ramen shop and a freelancer.",
 
   // Add your photos of finished cards here.
   // 1. Put the picture files in  assets/work/
@@ -361,11 +348,28 @@ myWork: {
   //    { image: "assets/work/kusina.jpg", title: "Kusina ni Maria",
   //      note: "Restaurant · Quezon City", href: "https://portal.tapasul.com/r/yourname" },
   //    title, note and href are optional — a picture on its own is fine.
+  //    Add "href" and the tile becomes clickable.
   items: [
-    // ← CHANGE ME: add your client work here
+    { image: "assets/work/jenny-steel.jpg",    title: "Jenny Joven Beria",
+      note: "Steel fabrication · ALR Steel Fabrication and Services OPC" },
+    { image: "assets/work/melbert-ramen.jpg",  title: "Melbert Pereda",
+      note: "Food industry · Founder & CEO, Brother's Ramen" },
+    { image: "assets/work/arcega-freelance.jpg", title: "King Arcega",
+      note: "Freelancer · Affiliate marketing creator, theshop101.ph" },
   ],
 },
 ```
+
+- **Tap a tile and the picture opens** over the page. Tap the picture again
+  and it jumps to its real size (2048 px wide, scrollable) so a QR code or a
+  small detail can actually be read; **Open full size** opens the file itself.
+  Arrow keys or a sideways swipe move between cards, **Esc** or the **×** closes
+  it and puts the keyboard back on the tile you came from.
+
+**Three tiles are already in place** (Jenny — steel fabrication, Melbert — food,
+King Arcega — freelancer). Each picture is 1024 × 645 (the tile's shape) and
+shows two screens of that client's live page side by side. Replace a file with
+the same name and the tile updates — no config change needed.
 
 - Put the photos in **`assets/work/`** (create the folder next to `assets/`'s
   other sub-folders) and give each one a short name.
@@ -387,18 +391,40 @@ It is plain CSS 3D — no 3D library, so the page stays light. To swap the
 pictures, replace `assets/card-front.jpg` and `assets/card-back.jpg` with your
 own artwork (keep the same 1024 × 645 size so the proportions stay right).
 
-#### The “choose 2 features” picker in the booking form
+#### Booked days and times are blocked
 
-Standard-card customers pick **2** of the featured features while booking.
-The options come from `inside.featured` above — one list, two places.
+The date field on the booking page is a small calendar, and times that are
+already taken show why:
+
+- A day where **every** time has reached `booking.maxPerSlot` is greyed out,
+  struck through, labelled **“Fully booked”** for screen readers, and cannot be
+  clicked. Closed days (anything not in `booking.days`) are greyed the same way.
+- A time that is full is disabled and says **“Full”**; a time with one place
+  left says **“1 left”**.
+- The line under the date tells you how many times are still free, and if a day
+  fills up while the page is open you are asked to pick another day.
+
+Where the numbers come from: bookings made in this browser (`localStorage`),
+plus `GET /api/availability?from=…&to=…` for everyone else's. That endpoint
+ships in `functions/api/availability.js` and returns **counts only** — no
+personal data — so it is safe to leave public. Without D1 (or on a host with no
+Functions) it quietly returns nothing and the browser's own bookings still
+block. `api/availability` is the empty static fallback so the request never
+404s on a plain static host.
+
+#### The “choose your feature” picker in the booking form
+
+Standard-card customers pick **1** of the featured features while booking (the
+table on the pricing page says **“Pick only one”**). The options come from
+`inside.featured` above — one list, two places.
 
 ```js
 booking: {
   featurePick: {
     enabled: true,
-    max: 2,                                  // how many they may pick
-    label: "Your 2 features",
-    note: "Your Standard card includes any 2 features. Pick yours below.",
+    max: 1,                                  // how many they may pick
+    label: "Your feature",
+    note: "Your Standard card includes one feature of your choice. Pick it below.",
     premiumNote: "Premium includes every feature — nothing to pick.",
     appliesTo: ["standard", "custom"],       // booking types that can pick
   },
@@ -406,7 +432,9 @@ booking: {
 ```
 
 - Premium bookings skip the picker and show `premiumNote` instead.
-- A third pick is refused with a short message.
+- A second pick is refused with a short message.
+- Want to give them two later? Set `max: 2` and reword `note` — the whole form
+  follows the number.
 - The choice is saved with the booking, appears in the summary panel, in the
   confirmation email and in the admin dashboard. It does **not** change the price.
 
@@ -469,7 +497,7 @@ domain, the PIN or the order endpoint.
 ## 🔐 Admin dashboard — `admin.html`
 
 A separate page for running your appointments. Open **`/admin.html`** (there is a
-discreet "Admin" link in the site footer) and unlock it with the PIN.
+by typing its address) and unlock it with the PIN. The link is deliberately **not** in the site footer — the public shop never advertises the dashboard.
 
 | Tab | What it does |
 |-----|--------------|
