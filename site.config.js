@@ -39,7 +39,7 @@ window.TAPASUL_CONFIG = {
     // This is the ONLY place your domain is set. The build copies it into
     // the canonical link, the Open Graph tags, the JSON-LD, robots.txt
     // and sitemap.xml.
-    url: "https://tapasul.example",       // ← CHANGE ME
+    url: "https://shop.tapasul.com/",       // ← CHANGE ME
 
     // ── Contact details shown in the footer, the order form and the FAQ ──
     email: "tapasul.digitalcard@gmail.com",
