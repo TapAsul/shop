@@ -12,10 +12,10 @@ MAIL_FROM   = "bookings@tapasul.com"
 # -> D1 database, variable name DB). Only uncomment this block if you are
 # deploying with wrangler from a terminal AND you paste the real id:
 #
-# [[d1_databases]]
-# binding = "DB"
-# database_name = "tapasul-bookings"
-# database_id = "paste-the-real-id-here"
+[[d1_databases]]
+binding = "DB"
+database_name = "tapasul-bookings"
+database_id = "27d2a726-6835-4bfa-90f9-fcb71f49269c"
 
 # --- secrets ----------------------------------------------------------------
 # Never put these in this file. Set them as secrets:
